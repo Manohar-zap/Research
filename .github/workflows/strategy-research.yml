@@ -32,13 +32,15 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r requirements.txt
-      - name: Backtest predeclared strategies
+      - name: Syntax-check research and daily simulator
+        run: python -m py_compile research_backtest.py paper_trader.py
+      - name: Run bounded experiment search
         run: python research_backtest.py
       - name: Commit research report
         working-directory: .
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add paper-trader/reports/research-*.md
-          git diff --cached --quiet || git commit -m "Update strategy research backtest"
+          git add paper-trader/reports/ paper-trader/state/
+          git diff --cached --quiet || git commit -m "Update strategy experiment history and reports"
           git push
