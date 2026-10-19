@@ -432,6 +432,7 @@ def main():
             experiments,
             key=lambda item: (
                 item["validation"]["n"] >= 8,
+                item["validation"]["n"] > 0,
                 item["validation"]["net"] > 0,
                 item["validation"]["pf"] is not None and item["validation"]["pf"] >= 1.0,
                 item["validation"]["net"] - 1000.0 * item["validation"]["dd"],
