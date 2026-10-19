@@ -6,6 +6,7 @@ on:
     paths:
       - 'paper-trader/research_backtest.py'
       - 'paper-trader/requirements.txt'
+      - 'paper-trader/tests/**'
       - '.github/workflows/strategy-research.yml'
   schedule:
     # 5:00 PM IST on weekdays, after the daily paper-trading retries
