@@ -93,8 +93,8 @@ def indicators(df: pd.DataFrame) -> pd.DataFrame:
     x["SIG_ORB"] = (active & (times <= dt_time(14, 30)) & (x["EMA9"] > x["EMA21"])
                     & (x["Close"] > x["OR_HIGH"]) & (x["PREV_CLOSE"] <= x["OR_HIGH"])
                     & (x["Volume"] >= 1.2 * x["VOL_MED20"]))
-    x["SIG_MEANREV"] = (active & (x["Close"] < x["VWAP"] - x["ATR14"])
-                        & (x["RSI14"] < 30) & (x["PREV_CLOSE"] <= x["PREV_EMA9"])
+    x["SIG_MEANREV"] = (active & (x["Close"] < x["VWAP"] - 0.5 * x["ATR14"])
+                        & (x["RSI14"] < 40) & (x["PREV_CLOSE"] <= x["PREV_EMA9"])
                         & (x["Close"] > x["EMA9"]))
     return x
 
@@ -260,7 +260,7 @@ def main():
               "## Methods",
               "- Compare three predeclared long-only strategies: VWAP/EMA momentum, opening-range breakout, and VWAP mean reversion.",
               "- Prefer 5-minute candles; if fewer than 15 usable session dates are found, retry the full stock universe at 15-minute candles rather than mix intervals.",
-              "- Entries use the next candle open; one open portfolio position at a time per strategy."
+              "- Entries use the next candle open; one open portfolio position at a time per strategy.",
               "- Planned risk ₹250/trade, max notional ₹25,000/trade, max 2 trades/day and ₹500 daily-loss stop; stop-first if stop and target touch in the same candle.",
               "- Estimated 0.10% round-trip costs. This is a rough proxy, not an exact Groww charge schedule.",
               "- 70% chronological in-sample / 30% held-out out-of-sample split; no parameter search is performed.", "",
