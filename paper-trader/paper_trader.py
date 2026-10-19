@@ -70,10 +70,20 @@ def download_today(symbol, today):
         df.index = idx
         df = df[~df.index.duplicated(keep='last')].sort_index()
         df = df[df.index.date == today]
-        df = df.between_time('09:20', '15:30')
+        df = df.between_time('09:15', '15:30')
         required = {'Open','High','Low','Close','Volume'}
         if df.empty or not required.issubset(df.columns):
             return None, 'No verifiable current-session 5-minute candles'
+        df = df[list(required)].apply(pd.to_numeric, errors='coerce').dropna()
+        # Reject malformed OHLCV rows before computing indicators or simulated fills.
+        df = df[
+            (df['Open'] > 0) & (df['High'] > 0) & (df['Low'] > 0) & (df['Close'] > 0)
+            & (df['Volume'] >= 0)
+            & (df['High'] >= df[['Open', 'Close', 'Low']].max(axis=1))
+            & (df['Low'] <= df[['Open', 'Close', 'High']].min(axis=1))
+        ]
+        if df.empty:
+            return None, 'No valid OHLCV rows after price/volume consistency checks'
         # A completed NSE session should normally provide around 75 five-minute
         # candles. Refuse partial/stale feeds rather than make a decision from fragments.
         if len(df) < 60:
