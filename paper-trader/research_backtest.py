@@ -321,76 +321,222 @@ def save_json(path: Path, value: dict) -> None:
 def main():
     now = datetime.now(TZ)
     REPORTS.mkdir(parents=True, exist_ok=True)
-    report = [f"# Intraday Strategy Research — {now:%Y-%m-%d}", "",
-              f"**Generated IST:** {now.isoformat()}",
-              "**Mode:** Historical simulation only; no brokerage orders.",
-              "**Initial equity per strategy/split:** ₹1,00,000", "",
-              "## Methods",
-              "- Compare three predeclared long-only strategies: VWAP/EMA momentum, opening-range breakout, and VWAP mean reversion.",
-              "- Prefer 5-minute candles; if fewer than 15 usable session dates are found, retry the full stock universe at 15-minute candles rather than mix intervals.",
-              "- Entries use the next candle open; one open portfolio position at a time per strategy.",
-              "- Planned risk ₹250/trade, max notional ₹25,000/trade, max 2 trades/day and ₹500 daily-loss stop; stop-first if stop and target touch in the same candle.",
-              "- Estimated 0.10% round-trip costs. This is a rough proxy, not an exact Groww charge schedule.",
-              "- 70% chronological in-sample / 30% held-out out-of-sample split; no parameter search is performed.", "",
-              "## Data coverage"]
-    data, failures, all_dates = load_universe("5m")
+    history_path = ROOT / "state" / "experiment_history.json"
+    variants = build_variants()
+    report = [
+        f"# Automated Strategy Experiment — {now:%Y-%m-%d}", "",
+        f"**Run time (IST):** {now.isoformat()}",
+        "**Mode:** offline historical research and paper-candidate screening only; no brokerage orders.",
+        f"**Experiment version:** grid-v1 · **Predeclared variants:** {len(variants)}", "",
+        "## Automated experiment loop",
+        "- Fetch free intraday OHLCV and validate complete sessions.",
+        "- Run a fixed parameter grid across three strategy families.",
+        "- Rank variants using the middle chronological validation slice only.",
+        "- Test only the validation winner on the untouched final holdout slice.",
+        "- Log results persistently; re-runs on unchanged data update an audit record rather than counting as new evidence.", "",
+        "## Methods and controls",
+        "- Prefer 5-minute data; if fewer than 15 complete dates are found, retry the whole universe at 15-minute resolution. Never mix intervals.",
+        "- Use common complete session dates across symbols for comparable splits.",
+        "- Next-candle-open entry; one open position at a time per variant; max 2 trades/day; ₹250 planned risk/trade; ₹25,000 maximum notional; ₹500 daily-loss limit.",
+        "- If stop and target are both touched in one candle, assume the stop happened first; exit by 15:15 IST.",
+        "- Estimated 0.10% round-trip costs; this is not an exact Groww fee quote.", "",
+        "## Data coverage",
+    ]
+
+    data, failures, union_dates = load_universe("5m")
     used_interval = "5m"
-    primary_date_count = len(all_dates)
-    if primary_date_count < 15:
+    primary_count = len(union_dates)
+    if primary_count < 15:
         fallback_data, fallback_failures, fallback_dates = load_universe("15m")
-        if len(fallback_dates) > primary_date_count:
-            data, failures, all_dates, used_interval = fallback_data, fallback_failures, fallback_dates, "15m"
-            report.append(f"- Fallback applied: 5-minute history had {primary_date_count} complete session dates; using 15-minute history for the entire universe ({len(all_dates)} dates).")
-    report.append(f"- Selected research interval: {used_interval}")
-    for symbol, x in data.items():
-        dates = sorted(set(x.index.date))
-        report.append(f"- {symbol}: {len(x)} candles, {len(dates)} complete sessions ({dates[0]} to {dates[-1]})")
+        if len(fallback_dates) > primary_count:
+            data, failures, union_dates, used_interval = fallback_data, fallback_failures, fallback_dates, "15m"
+            report.append(f"- Fallback used: 5-minute data had {primary_count} complete dates; 15-minute data had {len(union_dates)}.")
+    report.append(f"- Selected interval: {used_interval}")
+
+    date_sets = [set(frame.index.date) for frame in data.values()]
+    common_dates = sorted(set.intersection(*date_sets)) if date_sets else []
+    if len(common_dates) >= 10:
+        all_dates = common_dates
+        common_set = set(common_dates)
+        data = {
+            symbol: frame[[ts.date() in common_set for ts in frame.index]].copy()
+            for symbol, frame in data.items()
+        }
+        for symbol, frame in data.items():
+            frame.attrs["min_bars"] = 60 if used_interval == "5m" else 20
+            frame.attrs["min_last_time"] = dt_time(15, 25) if used_interval == "5m" else dt_time(15, 15)
+            report.append(f"- {symbol}: {len(frame)} bars across {len(set(frame.index.date))} common sessions.")
+    else:
+        all_dates = []
+        report.append(f"- Only {len(common_dates)} common session dates; insufficient for a comparable multi-symbol split.")
     for symbol, error in failures:
         report.append(f"- {symbol}: not usable — {error}")
-    if not data or len(all_dates) < 10:
-        report += ["", "## Decision", "**DATA-LIMITED:** fewer than 10 usable session dates remained after trying both 5-minute and 15-minute data. No strategy is rated or promoted; no results are invented.",
-                   "Retry later or obtain reliable historical intraday data."]
+
+    history = {"schema_version": 1, "runs": []}
+    if history_path.exists():
+        try:
+            old_history = json.loads(history_path.read_text())
+            if isinstance(old_history, dict) and isinstance(old_history.get("runs"), list):
+                history = old_history
+        except Exception:
+            report.append("- Previous experiment history could not be read; starting a new audit file.")
+
+    selected = None
+    validation_rankings = []
+    training_metrics = None
+    validation_metrics = None
+    holdout_metrics = None
+    status = "DATA_LIMITED"
+    data_end = str(max(all_dates)) if all_dates else None
+
+    if len(all_dates) < 25 or not data:
+        report += [
+            "", "## Decision",
+            f"**DATA-LIMITED:** {len(all_dates)} common complete dates; at least 25 are required for train/validation/holdout.",
+            "No variant is selected or promoted, and no result is fabricated.",
+        ]
     else:
-        if len(all_dates) < 30:
-            report += ["", f"**Sample warning:** only {len(all_dates)} usable session dates. Results below are exploratory only and cannot establish a strategy edge."]
-        cut = max(1, min(len(all_dates) - 1, int(len(all_dates) * 0.70)))
-        train_dates, test_dates = set(all_dates[:cut]), set(all_dates[cut:])
-        report += ["", "## Time split",
-                   f"- In-sample: {min(train_dates)} to {max(train_dates)} ({len(train_dates)} session dates)",
-                   f"- Held-out out-of-sample: {min(test_dates)} to {max(test_dates)} ({len(test_dates)} session dates)",
-                   "", "## NIFTY 50 benchmark",
-                   "- " + nifty_benchmark(test_dates),
-                   "", "## Results",
-                   "| Strategy | Period | Trades | Net P/L | Return | Win rate | Avg/trade | Profit factor | Max drawdown | Costs |",
-                   "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
-        cache = {sym: candidates_for(sym, x) for sym, x in data.items()}
-        results = {}
-        for strategy in STRATEGIES:
-            candidates = [c for rows in cache.values() for c in rows if c["strategy"] == strategy]
-            tr, te = simulate(candidates, train_dates), simulate(candidates, test_dates)
-            sm = stats(tr), stats(te)
-            results[strategy] = sm[1]
-            for label, m in (("In-sample", sm[0]), ("Out-of-sample", sm[1])):
-                report.append(f"| {strategy} | {label} | {m['n']} | ₹{m['net']:,.2f} | {m['return']:.3f}% | "
-                              f"{fnum(m['winrate'], '%')} | ₹{fnum(m['avg'])} | {fnum(m['pf'])} | "
-                              f"{m['dd']:.3f}% | ₹{m['costs']:,.2f} |")
-        qualified = [name for name, m in results.items()
-                     if m["n"] >= 30 and m["net"] > 0 and m["pf"] is not None and m["pf"] >= 1.2]
-        report += ["", "## Research decision"]
-        if qualified:
-            report.append("Minimum research screen passed (not a profitability guarantee): " + ", ".join(qualified) +
-                          ". Continue with longer walk-forward testing and paper-trading confirmation before any strategy change.")
+        n = len(all_dates)
+        train_end = int(n * 0.60)
+        val_end = int(n * 0.80)
+        train_dates = set(all_dates[:train_end])
+        validation_dates = set(all_dates[train_end:val_end])
+        holdout_dates = set(all_dates[val_end:])
+        report += [
+            "", "## Chronological split",
+            f"- Train: {min(train_dates)} to {max(train_dates)} ({len(train_dates)} dates)",
+            f"- Validation / selection: {min(validation_dates)} to {max(validation_dates)} ({len(validation_dates)} dates)",
+            f"- Untouched final holdout: {min(holdout_dates)} to {max(holdout_dates)} ({len(holdout_dates)} dates)",
+            "", "## Parameter experiments — ranked by validation only",
+            "| Rank | Variant | Validation trades | Net P/L | PF | Max drawdown |",
+            "|---:|---|---:|---:|---:|---:|",
+        ]
+        experiments = []
+        for variant in variants:
+            candidates = [
+                item for symbol, frame in data.items()
+                for item in candidates_for(symbol, frame, variant)
+            ]
+            train_trades = simulate(candidates, train_dates)
+            val_trades = simulate(candidates, validation_dates)
+            train_stats, val_stats = stats(train_trades), stats(val_trades)
+            experiments.append({
+                "variant": variant,
+                "train": train_stats,
+                "validation": val_stats,
+                "_candidates": candidates,
+            })
+        ranked = sorted(
+            experiments,
+            key=lambda item: (
+                item["validation"]["n"] >= 8,
+                item["validation"]["net"] > 0,
+                item["validation"]["pf"] is not None and item["validation"]["pf"] >= 1.0,
+                item["validation"]["net"] - 1000.0 * item["validation"]["dd"],
+                item["validation"]["n"],
+            ),
+            reverse=True,
+        )
+        for rank, item in enumerate(ranked, start=1):
+            m = item["validation"]
+            validation_rankings.append({
+                "rank": rank, "variant": item["variant"],
+                "train": item["train"], "validation": m,
+            })
+            report.append(
+                f"| {rank} | {item['variant']['id']} | {m['n']} | ₹{m['net']:,.2f} | "
+                f"{fnum(m['pf'])} | {m['dd']:.3f}% |"
+            )
+
+        # Selection uses validation only; holdout P/L cannot determine the winner.
+        winner = next(
+            (item for item in ranked
+             if item["validation"]["n"] >= 8
+             and item["validation"]["net"] > 0
+             and item["validation"]["pf"] is not None
+             and item["validation"]["pf"] >= 1.0
+             and item["validation"]["dd"] <= 2.5),
+            None,
+        )
+        report += ["", "## Final holdout and candidate decision"]
+        if winner is None:
+            status = "NO_VALIDATION_CANDIDATE"
+            report.append("No variant cleared the validation gate. The final holdout was not used to rank variants; the daily baseline remains unchanged.")
         else:
-            report.append("No strategy is promoted. Minimum screen: at least 30 out-of-sample trades, positive net P/L after estimated costs, and profit factor at least 1.20.")
-    report += ["", "## Limitations",
-               "- Yahoo Finance via yfinance is an unofficial feed; historical 5-minute bars can be missing, revised, or delayed.",
-               "- OHLC candles cannot reveal exact intrabar price sequence, bid-ask spread, queue priority, or actual fills.",
-               "- The 0.10% cost estimate is approximate; confirm actual brokerage, STT, exchange, GST, stamp-duty and SEBI charges separately.",
-               "- The stock universe is a fixed shortlist and has selection bias. A 60-day intraday sample is not enough to establish durable profitability.",
-               "- This report does not automatically change the daily paper-trading strategy. Do not infer future returns from backtest results.",
-               "- The ₹1,000–₹3,000 daily target is not forced; no-trade days are acceptable."]
-    path = REPORTS / f"research-{now:%Y-%m-%d}.md"
-    path.write_text("\n".join(report) + "\n")
+            selected = winner["variant"]
+            training_metrics = winner["train"]
+            validation_metrics = winner["validation"]
+            holdout_trades = simulate(winner["_candidates"], holdout_dates)
+            holdout_metrics = stats(holdout_trades)
+            h = holdout_metrics
+            report.append(f"- Variant selected on validation: {selected['id']}.")
+            report.append(f"- Untouched holdout: {h['n']} trades; net ₹{h['net']:,.2f}; return {h['return']:.3f}%; win rate {fnum(h['winrate'], '%')}; PF {fnum(h['pf'])}; max drawdown {h['dd']:.3f}%.")
+            report.append("- NIFTY 50 benchmark: " + nifty_benchmark(holdout_dates))
+            if h["n"] >= 15 and h["net"] > 0 and h["pf"] is not None and h["pf"] >= 1.2 and h["dd"] <= 2.0:
+                status = "SHADOW_PAPER_CANDIDATE"
+                report.append("Holdout gate passed for shadow paper tracking only. It is not a production strategy; 30 genuine forward paper trades are still required.")
+            else:
+                status = "NOT_QUALIFIED"
+                report.append("Holdout gate not passed. Keep the baseline unchanged and continue testing on fresh data.")
+
+    report += [
+        "", "## Interpretation",
+        "- This is automated bounded parameter search, not self-modifying AI or neural-network retraining.",
+        "- Variant ranking is based on validation; only the selected validation winner is evaluated on the final holdout.",
+        "- The workflow never places live orders and never changes the active paper strategy automatically.",
+        "- Yahoo Finance is unofficial, candle fills are approximate, and the 0.10% cost model is not exact.",
+        "- A daily ₹1,000–₹3,000 target is not forced; no-trade days are acceptable.",
+    ]
+
+    record = {
+        "experiment_version": "grid-v1",
+        "run_at_ist": now.isoformat(),
+        "latest_data_date": data_end,
+        "interval": used_interval,
+        "common_session_dates": len(all_dates),
+        "variant_count": len(variants),
+        "status": status,
+        "selected_variant": selected,
+        "training_metrics": training_metrics,
+        "validation_metrics": validation_metrics,
+        "holdout_metrics": holdout_metrics,
+        "validation_rankings": validation_rankings,
+    }
+    record_key = (record["experiment_version"], record["interval"], record["latest_data_date"])
+    previous = next(
+        (item for item in history["runs"]
+         if (item.get("experiment_version"), item.get("interval"), item.get("latest_data_date")) == record_key),
+        None,
+    )
+    if previous is None:
+        history["runs"].append(record)
+    else:
+        repeat_count = int(previous.get("repeat_check_count", 0)) + 1
+        previous.update(record)
+        previous["repeat_check_count"] = repeat_count
+    history["schema_version"] = 1
+    history["updated_at_ist"] = now.isoformat()
+    history["latest"] = record
+    history["runs"] = history["runs"][-180:]
+    save_json(history_path, history)
+
+    candidate_path = ROOT / "state" / "shadow_paper_candidate.json"
+    if status == "SHADOW_PAPER_CANDIDATE" and selected:
+        save_json(candidate_path, {
+            "status": status,
+            "experiment_version": "grid-v1",
+            "selected_at_ist": now.isoformat(),
+            "latest_data_date": data_end,
+            "variant": selected,
+            "validation_metrics": validation_metrics,
+            "holdout_metrics": holdout_metrics,
+            "next_step": "Start a separate shadow portfolio and require 30 genuine forward paper trades before considering any strategy change. Never place live orders.",
+        })
+    elif candidate_path.exists():
+        candidate_path.unlink()
+
+    report_path = REPORTS / f"research-{now:%Y-%m-%d}.md"
+    report_path.write_text("\n".join(report) + "\n")
     print("\n".join(report))
 
 
