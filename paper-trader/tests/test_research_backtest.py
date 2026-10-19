@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from research_backtest import common_session_dates, filter_valid_ohlcv, indicators, net_pnl_at_cost_rate
+from research_backtest import common_session_dates, filter_valid_ohlcv, indicators, merge_session_history, net_pnl_at_cost_rate
 from market_data import expected_session_times, is_complete_session
 from paper_trader import indicators as paper_indicators, select_portfolio_trade
 
