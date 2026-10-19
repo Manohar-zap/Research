@@ -262,6 +262,23 @@ def simulate(candidates: list[dict], dates: set) -> list[dict]:
     return trades
 
 
+def net_pnl_at_cost_rate(trades: list[dict], rate: float) -> float:
+    """Reprice a fixed set of simulated fills at an alternative proportional cost rate."""
+    if not math.isfinite(rate) or rate < 0:
+        raise ValueError("Cost rate must be a finite, nonnegative fraction")
+    total = 0.0
+    for trade in trades:
+        entry, exit_price, quantity = (
+            float(trade["entry"]),
+            float(trade["exit"]),
+            int(trade["qty"]),
+        )
+        gross = (exit_price - entry) * quantity
+        estimated_costs = (entry * quantity + exit_price * quantity) * rate / 2
+        total += gross - estimated_costs
+    return total
+
+
 def stats(trades: list[dict]) -> dict:
     p = [t["net"] for t in trades]
     win, loss = [v for v in p if v > 0], [v for v in p if v < 0]
@@ -531,6 +548,20 @@ def main():
              and item["validation"]["dd"] <= 2.5),
             None,
         )
+        # Re-price the same validation fills at higher friction assumptions. This is
+        # descriptive only: it never changes rankings or consults holdout performance.
+        top_validation_trades = simulate(ranked[0]["_candidates"], validation_dates)
+        report += [
+            "",
+            "## Cost sensitivity — top validation-ranked variant",
+            "Same validation fills, repriced under alternative proportional cost assumptions; ranking is unchanged.",
+            "| Assumed round-trip cost | Validation net P/L |",
+            "|---:|---:|",
+        ]
+        for rate in (0.001, 0.0015, 0.002):
+            scenario_net = net_pnl_at_cost_rate(top_validation_trades, rate)
+            report.append(f"| {rate * 100:.2f}% | ₹{scenario_net:,.2f} |")
+
         report += ["", "## Final holdout and candidate decision"]
         if winner is None:
             status = "NO_VALIDATION_CANDIDATE"
