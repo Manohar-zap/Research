@@ -19,6 +19,27 @@ COST_RATE = 0.001  # rough 0.10% round-trip estimate; not broker-specific
 SYMBOLS = ['RELIANCE.NS','HDFCBANK.NS','ICICIBANK.NS','INFY.NS','TCS.NS','SBIN.NS','LT.NS','ITC.NS']
 STRATEGY = 'VWAP-EMA Momentum v1'
 
+# Official NSE 2026 equities-segment holidays; update this list for each new year.
+NSE_HOLIDAYS = {
+    '2026-01-15': 'Municipal Corporation Election - Maharashtra',
+    '2026-01-26': 'Republic Day',
+    '2026-03-03': 'Holi',
+    '2026-03-26': 'Shri Ram Navami',
+    '2026-03-31': 'Shri Mahavir Jayanti',
+    '2026-04-03': 'Good Friday',
+    '2026-04-14': 'Dr. Baba Saheb Ambedkar Jayanti',
+    '2026-05-01': 'Maharashtra Day',
+    '2026-05-28': 'Bakri Id',
+    '2026-06-26': 'Muharram',
+    '2026-09-14': 'Ganesh Chaturthi',
+    '2026-10-02': 'Mahatma Gandhi Jayanti',
+    '2026-10-20': 'Dussehra',
+    '2026-11-10': 'Diwali-Balipratipada',
+    '2026-11-24': 'Prakash Gurpurb Sri Guru Nanak Dev',
+    '2026-12-25': 'Christmas',
+}
+NSE_HOLIDAY_SOURCE = 'https://www.nseindia.com/resources/exchange-communication-holidays'
+
 
 def load_ledger():
     STATE.parent.mkdir(parents=True, exist_ok=True)
@@ -135,7 +156,31 @@ def main():
     ledger = load_ledger()
     REPORTS.mkdir(parents=True, exist_ok=True)
     if today.weekday() >= 5:
-        print('Weekend: no NSE cash session; no trades recorded.')
+        print('Weekend: no regular NSE cash-equity session; no trades recorded.')
+        return
+    if today_s in NSE_HOLIDAYS:
+        # Produce a dated no-session report, but do not add a fake trading session to the ledger.
+        holiday_lines = [
+            f'# NSE Paper Trading Report — {today_s}',
+            '',
+            f'**Generated (IST):** {now.isoformat()}',
+            '**Status:** MARKET_HOLIDAY — no regular cash-equity session',
+            f'**Reason:** {NSE_HOLIDAYS[today_s]}',
+            '**Mode:** Simulation only; no brokerage orders placed.',
+            '',
+            '## Portfolio (unchanged)',
+            f"- Virtual equity: ₹{float(ledger['equity']):,.2f}",
+            f"- Cumulative realized net P/L: ₹{sum(t['net_pnl'] for t in ledger['trades']):,.2f}",
+            f"- Recorded sessions: {len(ledger['sessions'])}",
+            f"- Recorded trades: {len(ledger['trades'])}",
+            '',
+            'No trade was simulated and no session was added to the performance ledger.',
+            f'Holiday calendar source: {NSE_HOLIDAY_SOURCE}',
+            'This embedded holiday list covers the 2026 NSE equities calendar and must be updated when NSE publishes a new calendar.',
+        ]
+        holiday_path = REPORTS / f'{today_s}.md'
+        holiday_path.write_text('\\n'.join(holiday_lines) + '\\n')
+        print('\\n'.join(holiday_lines))
         return
     # Do not let a manual diagnostic run before market close consume the date in the
     # ledger. NSE cash trading normally ends at 15:30 IST; allow a small data-finalization buffer.
