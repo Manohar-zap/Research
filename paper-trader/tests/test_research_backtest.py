@@ -4,7 +4,7 @@ import pandas as pd
 
 from research_backtest import filter_valid_ohlcv, indicators
 from market_data import expected_session_times, is_complete_session
-from paper_trader import indicators as paper_indicators
+from paper_trader import indicators as paper_indicators, select_portfolio_trade
 
 
 class ValidOhlcvTests(unittest.TestCase):
@@ -119,6 +119,24 @@ class ValidOhlcvTests(unittest.TestCase):
         self.assertTrue(pd.isna(calculated.iloc[0]["EMA21"]))
         self.assertTrue(pd.isna(calculated.iloc[19]["EMA21"]))
         self.assertFalse(pd.isna(calculated.iloc[20]["EMA21"]))
+
+    def test_portfolio_selects_earliest_entry_not_watchlist_order(self):
+        later = {
+            "ticker": "RELIANCE.NS",
+            "entry_time_ist": "2026-10-19T10:00:00+05:30",
+        }
+        earlier = {
+            "ticker": "TCS.NS",
+            "entry_time_ist": "2026-10-19T09:45:00+05:30",
+        }
+        self.assertEqual(select_portfolio_trade([later, earlier])["ticker"], "TCS.NS")
+        self.assertEqual(select_portfolio_trade([earlier, later])["ticker"], "TCS.NS")
+
+    def test_portfolio_selection_is_deterministic_for_equal_entry_times(self):
+        a = {"ticker": "RELIANCE.NS", "entry_time_ist": "2026-10-19T10:00:00+05:30"}
+        b = {"ticker": "INFY.NS", "entry_time_ist": "2026-10-19T10:00:00+05:30"}
+        self.assertEqual(select_portfolio_trade([a, b])["ticker"], "INFY.NS")
+        self.assertIsNone(select_portfolio_trade([]))
 
 
 
