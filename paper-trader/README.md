@@ -7,7 +7,7 @@ GitHub Actions tries at 10:15, 10:30 and 10:45 UTC (15:45, 16:00 and 16:15 IST) 
 
 ## Data and limitations
 - Uses Yahoo Finance via `yfinance` for NSE-listed symbols (`.NS`) and NIFTY 50 (`^NSEI`). This is an unofficial source, not an exchange-certified feed. Intraday data can be delayed, incomplete, or unavailable.
-- A session is eligible only after 15:40 IST and only when recent 5-minute candles belong to the current IST date, include at least 60 candles, and extend to at least 15:25 IST. Otherwise no trade is simulated; data-limited reports can be retried after the close.
+- A paper-trading session is eligible only after 15:40 IST and only when the current IST date has the full expected 5-minute grid (75 timestamps from 09:15 through 15:25). A missing or malformed candle invalidates that session; no trade is simulated from partial data. Research accepts only full 5-minute (75 timestamp) or 15-minute (25 timestamp) session grids, with exact expected timestamps and no duplicates.
 - The script includes the official 2026 NSE equity-holiday list and writes a no-session report on listed holidays without modifying the trading ledger. Update the list when NSE publishes the next year's calendar. Special sessions, including Muhurat trading, are not yet scheduled.
 - Simulated execution assumes entry at the next candle open after a signal. Stop/target fills are approximations based on candle OHLC; if both stop and target occur in the same candle, stop is assumed first (conservative).
 - Trading costs are an explicit rough estimate of 0.10% of traded notional round-trip, not a broker-specific fee quote. Replace with exact statutory charges before relying on results.
