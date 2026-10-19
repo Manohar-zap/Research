@@ -298,6 +298,12 @@ def load_universe(interval: str):
     return data, failures, dates
 
 
+def common_session_dates(data: dict[str, pd.DataFrame]) -> list:
+    """Return dates shared by every usable symbol; do not confuse this with a union."""
+    date_sets = [set(frame.index.date) for frame in data.values()]
+    return sorted(set.intersection(*date_sets)) if date_sets else []
+
+
 def nifty_benchmark(test_dates: set) -> str:
     try:
         raw = yf.download("^NSEI", period="60d", interval="1d", auto_adjust=False,
@@ -398,18 +404,26 @@ def main():
         "## Data coverage",
     ]
 
-    data, failures, union_dates = load_universe("5m")
+    data, failures, _ = load_universe("5m")
     used_interval = "5m"
-    primary_count = len(union_dates)
-    if primary_count < 15:
-        fallback_data, fallback_failures, fallback_dates = load_universe("15m")
-        if len(fallback_dates) > primary_count:
-            data, failures, union_dates, used_interval = fallback_data, fallback_failures, fallback_dates, "15m"
-            report.append(f"- Fallback used: 5-minute data had {primary_count} complete dates; 15-minute data had {len(union_dates)}.")
+    primary_common_dates = common_session_dates(data)
+    if len(primary_common_dates) < 15:
+        fallback_data, fallback_failures, _ = load_universe("15m")
+        fallback_common_dates = common_session_dates(fallback_data)
+        if len(fallback_common_dates) > len(primary_common_dates):
+            data, failures, used_interval = fallback_data, fallback_failures, "15m"
+            report.append(
+                f"- Fallback used: 5-minute data had {len(primary_common_dates)} common complete sessions; "
+                f"15-minute data had {len(fallback_common_dates)}."
+            )
+        else:
+            report.append(
+                f"- 15-minute fallback not selected: 5-minute data had {len(primary_common_dates)} "
+                f"common complete sessions versus {len(fallback_common_dates)} at 15 minutes."
+            )
     report.append(f"- Selected interval: {used_interval}")
 
-    date_sets = [set(frame.index.date) for frame in data.values()]
-    common_dates = sorted(set.intersection(*date_sets)) if date_sets else []
+    common_dates = common_session_dates(data)
     if len(common_dates) >= 10:
         all_dates = common_dates
         common_set = set(common_dates)
