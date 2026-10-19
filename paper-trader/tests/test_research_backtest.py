@@ -59,7 +59,7 @@ class ValidOhlcvTests(unittest.TestCase):
         first_bar_next_session = second[0]
         self.assertEqual(calculated.loc[first_bar_next_session, "EMA9"], 1000.0)
         self.assertTrue(pd.isna(calculated.loc[first_bar_next_session, "PREV_CLOSE"]))
-        self.assertEqual(calculated.loc[first_bar_next_session, "ATR14"], 2.0)
+        self.assertEqual(calculated.loc[second[6], "ATR14"], 2.0)
 
 
 if __name__ == "__main__":
