@@ -42,7 +42,13 @@ def get_bars(symbol: str, interval: str) -> tuple[pd.DataFrame, str | None]:
         df.index = idx
         df = df[~df.index.duplicated(keep="last")].sort_index()
         df = df[required].apply(pd.to_numeric, errors="coerce").dropna()
-        df = df[(df["Close"] > 0) & (df["High"] > 0) & (df["Low"] > 0)]
+        # Reject malformed bars instead of letting bad OHLCV values distort indicators or fills.
+        df = df[
+            (df["Open"] > 0) & (df["High"] > 0) & (df["Low"] > 0) & (df["Close"] > 0)
+            & (df["Volume"] >= 0)
+            & (df["High"] >= df[["Open", "Close", "Low"]].max(axis=1))
+            & (df["Low"] <= df[["Open", "Close", "High"]].min(axis=1))
+        ]
         df = df.between_time("09:15", "15:30")
         valid = []
         for d, day in df.groupby(df.index.date, sort=True):
@@ -485,6 +491,8 @@ def main():
 
     report += [
         "", "## Interpretation",
+        "- Data quality filter: invalid OHLC relationships, non-positive prices, negative volume, duplicate timestamps, and incomplete sessions are excluded before indicators are calculated.",
+        "- The experiment is not considered trained or accurate merely because one variant ranks first; validation and untouched holdout gates must both pass, then forward paper trades must confirm performance.",
         "- This is automated bounded parameter search, not self-modifying AI or neural-network retraining.",
         "- Variant ranking is based on validation; only the selected validation winner is evaluated on the final holdout.",
         "- The workflow never places live orders and never changes the active paper strategy automatically.",
