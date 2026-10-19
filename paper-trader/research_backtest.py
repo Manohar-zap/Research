@@ -93,8 +93,9 @@ def indicators(df: pd.DataFrame) -> pd.DataFrame:
     x["VWAP"] = (typical * volume).groupby(session).cumsum() / volume_cum.replace(0, float("nan"))
 
     # Match the live paper simulator: indicators restart at each market session.
-    x["EMA9"] = session_ewm(x["Close"], span=9)
-    x["EMA21"] = session_ewm(x["Close"], span=21)
+    # Do not treat a partially formed EMA as a fully warmed indicator.
+    x["EMA9"] = session_ewm(x["Close"], span=9, min_periods=9)
+    x["EMA21"] = session_ewm(x["Close"], span=21, min_periods=21)
     prev_close = x["Close"].groupby(session).shift(1)
     true_range = pd.concat(
         [
@@ -147,8 +148,9 @@ def indicators(df: pd.DataFrame) -> pd.DataFrame:
 def candidates_for(symbol: str, x: pd.DataFrame, variant: dict) -> list[dict]:
     """Generate simulated candidate trades for one fixed parameter variant."""
     out = []
-    fast = session_ewm(x["Close"], span=int(variant["ema_fast"]))
-    slow = session_ewm(x["Close"], span=int(variant["ema_slow"]))
+    fast_span, slow_span = int(variant["ema_fast"]), int(variant["ema_slow"])
+    fast = session_ewm(x["Close"], span=fast_span, min_periods=fast_span)
+    slow = session_ewm(x["Close"], span=slow_span, min_periods=slow_span)
     prev_fast = fast.groupby(fast.index.date).shift(1)
     times = pd.Series([ts.time() for ts in x.index], index=x.index)
     active = (times >= dt_time(9, 45)) & (times <= dt_time(14, 45))
