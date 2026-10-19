@@ -9,6 +9,8 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import yfinance as yf
 
+from market_data import is_complete_session
+
 TZ = ZoneInfo("Asia/Kolkata")
 ROOT = Path(__file__).resolve().parent
 REPORTS = ROOT / "reports"
@@ -70,11 +72,17 @@ def get_bars(symbol: str, interval: str) -> tuple[pd.DataFrame, str | None]:
         df = df.between_time("09:15", "15:30")
         valid = []
         for d, day in df.groupby(df.index.date, sort=True):
-            if len(day) >= min_bars and day.index[-1].time() >= min_last_time:
+            # Reject gaps as well as short/stale sessions; indicators must see a complete grid.
+            if is_complete_session(day.index, interval):
                 valid.append(d)
         if not valid:
-            return pd.DataFrame(), "No complete sessions passed candle-count/time checks"
-        df = df[[ts.date() in set(valid) for ts in df.index]]
+            expected_count = 75 if interval == "5m" else 25
+            return pd.DataFrame(), (
+                f"No sessions passed the complete {interval} candle-grid check "
+                f"({expected_count} expected timestamps per session)"
+            )
+        valid_dates = set(valid)
+        df = df[[ts.date() in valid_dates for ts in df.index]]
         df.attrs["interval"] = interval
         df.attrs["min_bars"] = min_bars
         df.attrs["min_last_time"] = min_last_time
