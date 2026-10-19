@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'paper-trader/research_backtest.py'
+      - 'paper-trader/paper_trader.py'
       - 'paper-trader/requirements.txt'
       - 'paper-trader/tests/**'
       - '.github/workflows/strategy-research.yml'
