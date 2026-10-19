@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from research_backtest import filter_valid_ohlcv, indicators
+from research_backtest import common_session_dates, filter_valid_ohlcv, indicators
 from market_data import expected_session_times, is_complete_session
 from paper_trader import indicators as paper_indicators, select_portfolio_trade
 
@@ -41,6 +41,19 @@ class ValidOhlcvTests(unittest.TestCase):
         frame = pd.DataFrame({"Open": [100], "Close": [101]})
         clean = filter_valid_ohlcv(frame)
         self.assertTrue(clean.empty)
+
+    def test_interval_selection_uses_shared_dates_not_union(self):
+        first = pd.DataFrame(
+            index=pd.to_datetime(["2026-10-01 09:15", "2026-10-02 09:15"])
+        )
+        second = pd.DataFrame(
+            index=pd.to_datetime(["2026-10-02 09:15", "2026-10-03 09:15"])
+        )
+        self.assertEqual(
+            [str(day) for day in common_session_dates({"A": first, "B": second})],
+            ["2026-10-02"],
+        )
+        self.assertEqual(common_session_dates({}), [])
 
     def test_expected_session_grids_match_nse_intraday_intervals(self):
         self.assertEqual(len(expected_session_times("5m")), 75)
