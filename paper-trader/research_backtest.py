@@ -270,6 +270,54 @@ def nifty_benchmark(test_dates: set) -> str:
         return f"Unavailable: {type(exc).__name__}: {exc}"
 
 
+def build_variants() -> list[dict]:
+    """A bounded parameter grid fixed before evaluation; never expand based on holdout results."""
+    variants = []
+    ema_grid = [
+        (5, 13, 1.0, 1.5), (5, 13, 1.0, 2.0),
+        (9, 21, 1.0, 1.5), (9, 21, 1.0, 2.0),
+        (9, 21, 1.5, 2.0), (12, 26, 1.0, 2.0),
+        (12, 26, 1.5, 2.0), (8, 20, 1.25, 2.0),
+    ]
+    for fast, slow, stop_atr, target_r in ema_grid:
+        variants.append({
+            "id": f"vwapema_f{fast}_s{slow}_stop{stop_atr:g}_r{target_r:g}",
+            "strategy": "VWAP_EMA", "ema_fast": fast, "ema_slow": slow,
+            "stop_atr": stop_atr, "target_r": target_r,
+            "volume_multiplier": 0.0, "deviation_atr": 0.0, "rsi_max": 0.0,
+        })
+    orb_grid = [
+        (5, 13, 1.0, 1.5, 1.0), (5, 13, 1.0, 2.0, 1.2),
+        (9, 21, 1.0, 1.5, 1.0), (9, 21, 1.0, 2.0, 1.2),
+        (9, 21, 1.5, 2.0, 1.5), (12, 26, 1.0, 2.0, 1.2),
+    ]
+    for fast, slow, stop_atr, target_r, vol_mult in orb_grid:
+        variants.append({
+            "id": f"orb_f{fast}_s{slow}_stop{stop_atr:g}_r{target_r:g}_vol{vol_mult:g}",
+            "strategy": "OPENING_RANGE_BREAKOUT", "ema_fast": fast, "ema_slow": slow,
+            "stop_atr": stop_atr, "target_r": target_r,
+            "volume_multiplier": vol_mult, "deviation_atr": 0.0, "rsi_max": 0.0,
+        })
+    mr_grid = [
+        (0.5, 30, 1.0, 1.5), (0.5, 35, 1.0, 1.5),
+        (0.5, 40, 1.0, 2.0), (0.75, 35, 1.0, 1.5),
+        (0.75, 40, 1.0, 2.0), (1.0, 35, 1.5, 1.5),
+    ]
+    for deviation, rsi_max, stop_atr, target_r in mr_grid:
+        variants.append({
+            "id": f"meanrev_dev{deviation:g}_rsi{rsi_max}_stop{stop_atr:g}_r{target_r:g}",
+            "strategy": "VWAP_MEAN_REVERSION", "ema_fast": 9, "ema_slow": 21,
+            "stop_atr": stop_atr, "target_r": target_r,
+            "volume_multiplier": 0.0, "deviation_atr": deviation, "rsi_max": rsi_max,
+        })
+    return variants
+
+
+def save_json(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=False, default=str) + "\n")
+
+
 def main():
     now = datetime.now(TZ)
     REPORTS.mkdir(parents=True, exist_ok=True)
