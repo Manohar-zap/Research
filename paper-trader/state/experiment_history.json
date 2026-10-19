@@ -3,7 +3,7 @@
   "runs": [
     {
       "experiment_version": "grid-v1",
-      "run_at_ist": "2026-10-20T02:45:26.240762+05:30",
+      "run_at_ist": "2026-10-20T02:46:25.219040+05:30",
       "latest_data_date": "2026-10-19",
       "interval": "15m",
       "common_session_dates": 23,
@@ -13,13 +13,14 @@
       "training_metrics": null,
       "validation_metrics": null,
       "holdout_metrics": null,
-      "validation_rankings": []
+      "validation_rankings": [],
+      "repeat_check_count": 1
     }
   ],
-  "updated_at_ist": "2026-10-20T02:45:26.240762+05:30",
+  "updated_at_ist": "2026-10-20T02:46:25.219040+05:30",
   "latest": {
     "experiment_version": "grid-v1",
-    "run_at_ist": "2026-10-20T02:45:26.240762+05:30",
+    "run_at_ist": "2026-10-20T02:46:25.219040+05:30",
     "latest_data_date": "2026-10-19",
     "interval": "15m",
     "common_session_dates": 23,
