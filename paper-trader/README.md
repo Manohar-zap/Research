@@ -11,7 +11,7 @@ GitHub Actions tries at 10:15, 10:30 and 10:45 UTC (15:45, 16:00 and 16:15 IST) 
 - The script includes the official 2026 NSE equity-holiday list and writes a no-session report on listed holidays without modifying the trading ledger. Update the list when NSE publishes the next year's calendar. Special sessions, including Muhurat trading, are not yet scheduled.
 - Simulated execution assumes entry at the next candle open after a signal. Stop/target fills are approximations based on candle OHLC; if both stop and target occur in the same candle, stop is assumed first (conservative).
 - Trading costs are an explicit rough estimate of 0.10% of traded notional round-trip, not a broker-specific fee quote. Replace with exact statutory charges before relying on results.
-- The strategy is an unvalidated research baseline, not a claim of profitability. Daily targets are not forced.
+- The daily VWAP/EMA strategy remains an unvalidated paper-trading baseline until the research reports show repeated out-of-sample evidence. Research compares three fixed rule sets; it does not auto-switch strategies or claim that any rule is profitable. Daily targets are not forced.
 
 ## Strategy v1
 5-minute VWAP + EMA momentum. A long signal requires EMA9 > EMA21, close above VWAP, and a close crossing above the previous candle high. Long-only cash equity; no leverage, short selling, options, or futures. ATR(14) sets a 1x ATR stop and 2R target. Max planned risk ₹250 per trade, max daily net loss ₹500, at most one simulated trade per day in v1, max ₹25,000 notional per position. No averaging down.
@@ -19,6 +19,8 @@ GitHub Actions tries at 10:15, 10:30 and 10:45 UTC (15:45, 16:00 and 16:15 IST) 
 ## Files
 - `state/ledger.json`: persistent virtual equity and daily/trade history.
 - `reports/`: dated Markdown reports.
+- `research_backtest.py`: historical comparison of VWAP/EMA momentum, opening-range breakout, and VWAP mean reversion with a chronological 70/30 train/test split.
+- `.github/workflows/strategy-research.yml`: schedules the research report at 5:00 PM IST on weekdays; reports are saved as `reports/research-YYYY-MM-DD.md`.
 
 ## Reports
 Daily results are generated on trading weekdays. Friday reports include week-to-date figures; the final trading session of a calendar month includes month-to-date figures. The ledger starts with a baseline on the first successful run; missing prior records are not backfilled.
