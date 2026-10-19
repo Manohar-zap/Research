@@ -49,46 +49,115 @@ def session_ewm(series: pd.Series, span: int, min_periods: int = 1) -> pd.Series
     return result
 
 
+def complete_sessions_only(df: pd.DataFrame, interval: str) -> pd.DataFrame:
+    """Keep only complete, duplicate-free, internally valid intraday sessions."""
+    if df is None or df.empty:
+        return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
+    clean = filter_valid_ohlcv(df)
+    if clean.empty:
+        return clean
+    valid_dates = [
+        day_date
+        for day_date, day in clean.groupby(clean.index.date, sort=True)
+        if is_complete_session(day.index, interval)
+    ]
+    valid_date_set = set(valid_dates)
+    return clean[[stamp.date() in valid_date_set for stamp in clean.index]].copy()
+
+
+def merge_session_history(
+    cached: pd.DataFrame,
+    fresh: pd.DataFrame,
+    interval: str,
+    retention_days: int = 180,
+) -> pd.DataFrame:
+    """Merge only complete sessions, preferring the latest downloaded bars on overlap."""
+    cached_valid = complete_sessions_only(cached, interval)
+    fresh_valid = complete_sessions_only(fresh, interval)
+    if cached_valid.empty and fresh_valid.empty:
+        return pd.DataFrame(columns=["Open", "High", "Low", "Close", "Volume"])
+    combined = pd.concat([cached_valid, fresh_valid]).sort_index(kind="stable")
+    # Overlap between a complete cached session and a complete refresh is expected;
+    # stable sorting leaves fresh rows last for each shared timestamp.
+    combined = combined[~combined.index.duplicated(keep="last")]
+    combined = complete_sessions_only(combined, interval)
+    if not combined.empty and retention_days > 0:
+        cutoff = combined.index.max() - pd.Timedelta(days=retention_days)
+        combined = combined[combined.index >= cutoff]
+    return combined
+
+
+def _normalize_index_timezone(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    idx = pd.to_datetime(out.index)
+    idx = idx.tz_localize(TZ) if idx.tz is None else idx.tz_convert(TZ)
+    out.index = idx
+    return out
+
+
 def get_bars(symbol: str, interval: str) -> tuple[pd.DataFrame, str | None]:
     min_bars = 60 if interval == "5m" else 20
     min_last_time = dt_time(15, 25) if interval == "5m" else dt_time(15, 15)
+    required = ["Open", "High", "Low", "Close", "Volume"]
+    cache_path = ROOT / "state" / "market_data_cache" / f"{symbol.replace('.', '_')}_{interval}.csv"
+    cached = pd.DataFrame(columns=required)
+    if cache_path.exists():
+        try:
+            cached = pd.read_csv(cache_path, index_col=0, parse_dates=True)
+            cached = _normalize_index_timezone(cached)
+            cached = cached[required] if set(required).issubset(cached.columns) else pd.DataFrame(columns=required)
+            cached = filter_valid_ohlcv(cached).between_time("09:15", "15:30")
+            cached = complete_sessions_only(cached, interval)
+        except Exception:
+            # A damaged cache must never block a fresh market-data fetch.
+            cached = pd.DataFrame(columns=required)
+
+    fresh = pd.DataFrame(columns=required)
+    fetch_error = None
     try:
-        raw = yf.download(symbol, period="60d", interval=interval, auto_adjust=False,
-                           progress=False, threads=False, prepost=False)
+        raw = yf.download(
+            symbol, period="60d", interval=interval, auto_adjust=False,
+            progress=False, threads=False, prepost=False,
+        )
         if raw is None or raw.empty:
-            return pd.DataFrame(), f"No {interval} data returned"
-        df = raw.copy()
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-        required = ["Open", "High", "Low", "Close", "Volume"]
-        if not set(required).issubset(df.columns):
-            return pd.DataFrame(), "Missing OHLCV columns"
-        idx = pd.to_datetime(df.index)
-        idx = idx.tz_localize(TZ) if idx.tz is None else idx.tz_convert(TZ)
-        df.index = idx
-        df = df[~df.index.duplicated(keep="last")].sort_index()
-        # Reject malformed bars before indicators and simulated fills.
-        df = filter_valid_ohlcv(df[required])
-        df = df.between_time("09:15", "15:30")
-        valid = []
-        for d, day in df.groupby(df.index.date, sort=True):
-            # Reject gaps as well as short/stale sessions; indicators must see a complete grid.
-            if is_complete_session(day.index, interval):
-                valid.append(d)
-        if not valid:
-            expected_count = 75 if interval == "5m" else 25
-            return pd.DataFrame(), (
-                f"No sessions passed the complete {interval} candle-grid check "
-                f"({expected_count} expected timestamps per session)"
-            )
-        valid_dates = set(valid)
-        df = df[[ts.date() in valid_dates for ts in df.index]]
-        df.attrs["interval"] = interval
-        df.attrs["min_bars"] = min_bars
-        df.attrs["min_last_time"] = min_last_time
-        return df, None
+            fetch_error = f"No {interval} data returned; using validated cache if available"
+        else:
+            df = raw.copy()
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+            if not set(required).issubset(df.columns):
+                fetch_error = "Missing OHLCV columns; using validated cache if available"
+            else:
+                df = _normalize_index_timezone(df)
+                # A duplicate timestamp invalidates its entire source session instead of
+                # silently deduplicating data and treating a questionable session as valid.
+                duplicate_rows = df.index.duplicated(keep=False)
+                duplicate_dates = set(df.index[duplicate_rows].date)
+                df = df.sort_index()
+                df = filter_valid_ohlcv(df[required]).between_time("09:15", "15:30")
+                if duplicate_dates:
+                    df = df[[stamp.date() not in duplicate_dates for stamp in df.index]]
+                fresh = complete_sessions_only(df, interval)
+                if fresh.empty:
+                    fetch_error = (
+                        f"No complete {interval} sessions in current fetch; "
+                        "using validated cache if available"
+                    )
     except Exception as exc:
-        return pd.DataFrame(), f"{type(exc).__name__}: {exc}"
+        fetch_error = f"{type(exc).__name__}: {exc}; using validated cache if available"
+
+    df = merge_session_history(cached, fresh, interval, retention_days=180)
+    if df.empty:
+        expected_count = 75 if interval == "5m" else 25
+        reason = fetch_error or f"No sessions passed the complete {interval} candle-grid check ({expected_count} expected timestamps per session)"
+        return pd.DataFrame(), reason
+
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(cache_path, index_label="Timestamp", date_format="%Y-%m-%dT%H:%M:%S%z")
+    df.attrs["interval"] = interval
+    df.attrs["min_bars"] = min_bars
+    df.attrs["min_last_time"] = min_last_time
+    return df, None
 
 
 def indicators(df: pd.DataFrame) -> pd.DataFrame:
