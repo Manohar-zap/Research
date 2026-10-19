@@ -7,7 +7,7 @@ GitHub Actions runs on weekdays at 10:15 UTC (15:45 IST) to allow a buffer after
 
 ## Data and limitations
 - Uses Yahoo Finance via `yfinance` for NSE-listed symbols (`.NS`) and NIFTY 50 (`^NSEI`). This is an unofficial source, not an exchange-certified feed. Intraday data can be delayed, incomplete, or unavailable.
-- A session is eligible only after 15:40 IST and only when recent 5-minute candles belong to the current IST date, include at least 50 candles, and extend to at least 15:15 IST. Otherwise no trade is simulated; the script records a data-limited report only after the post-close window.
+- A session is eligible only after 15:40 IST and only when recent 5-minute candles belong to the current IST date, include at least 60 candles, and extend to at least 15:25 IST. Otherwise no trade is simulated; the script records a data-limited report only after the post-close window.
 - Simulated execution assumes entry at the next candle open after a signal. Stop/target fills are approximations based on candle OHLC; if both stop and target occur in the same candle, stop is assumed first (conservative).
 - Trading costs are an explicit rough estimate of 0.10% of traded notional round-trip, not a broker-specific fee quote. Replace with exact statutory charges before relying on results.
 - The strategy is an unvalidated research baseline, not a claim of profitability. Daily targets are not forced.
