@@ -1,31 +1,8 @@
 {
   "starting_equity": 100000,
-  "equity": 100000.0,
+  "equity": 100000,
   "trades": [],
-  "sessions": [
-    {
-      "date": "2026-10-20",
-      "generated_at_ist": "2026-10-20T01:12:47.557134+05:30",
-      "trades": 0,
-      "gross_pnl": 0,
-      "estimated_costs": 0,
-      "net_pnl": 0,
-      "closing_equity": 100000.0,
-      "daily_return_pct": 0.0,
-      "data_symbols_validated": 0,
-      "data_errors": [
-        "RELIANCE.NS: No verifiable current-session 5-minute candles",
-        "HDFCBANK.NS: No verifiable current-session 5-minute candles",
-        "ICICIBANK.NS: No verifiable current-session 5-minute candles",
-        "INFY.NS: No verifiable current-session 5-minute candles",
-        "TCS.NS: No verifiable current-session 5-minute candles",
-        "SBIN.NS: No verifiable current-session 5-minute candles",
-        "LT.NS: No verifiable current-session 5-minute candles",
-        "ITC.NS: No verifiable current-session 5-minute candles"
-      ],
-      "status": "DATA_LIMITED"
-    }
-  ],
+  "sessions": [],
   "created_at": "2026-10-20T00:00:00+05:30",
-  "note": "Initialized baseline; no historical trades have been fabricated."
+  "note": "Baseline only. The 2026-10-20 01:12 IST manual diagnostic was removed because it ran before market close and was not a valid trading session. No historical trades were fabricated."
 }
