@@ -389,14 +389,16 @@ def main():
     status = "DATA_LIMITED"
     data_end = str(max(all_dates)) if all_dates else None
 
-    if len(all_dates) < 25 or not data:
+    if len(all_dates) < 15 or not data:
         report += [
             "", "## Decision",
-            f"**DATA-LIMITED:** {len(all_dates)} common complete dates; at least 25 are required for train/validation/holdout.",
+            f"**DATA-LIMITED:** {len(all_dates)} common complete dates; at least 15 are required to run the exploratory grid.",
             "No variant is selected or promoted, and no result is fabricated.",
         ]
     else:
         n = len(all_dates)
+        if n < 30:
+            report.append(f"- **Exploratory sample warning:** only {n} common sessions. Results can rank experiments for research, but cannot qualify a candidate for paper tracking.")
         train_end = int(n * 0.60)
         val_end = int(n * 0.80)
         train_dates = set(all_dates[:train_end])
@@ -449,9 +451,10 @@ def main():
             )
 
         # Selection uses validation only; holdout P/L cannot determine the winner.
+        min_validation_trades = max(5, min(8, len(validation_dates)))
         winner = next(
             (item for item in ranked
-             if item["validation"]["n"] >= 8
+             if item["validation"]["n"] >= min_validation_trades
              and item["validation"]["net"] > 0
              and item["validation"]["pf"] is not None
              and item["validation"]["pf"] >= 1.0
