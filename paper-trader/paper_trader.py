@@ -6,6 +6,8 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import yfinance as yf
 
+from market_data import is_complete_session
+
 TZ = ZoneInfo('Asia/Kolkata')
 ROOT = Path(__file__).resolve().parent
 STATE = ROOT / 'state' / 'ledger.json'
@@ -84,12 +86,13 @@ def download_today(symbol, today):
         ]
         if df.empty:
             return None, 'No valid OHLCV rows after price/volume consistency checks'
-        # A completed NSE session should normally provide around 75 five-minute
-        # candles. Refuse partial/stale feeds rather than make a decision from fragments.
-        if len(df) < 60:
-            return None, f'Only {len(df)} current-session candles; expected at least 60'
-        if df.index[-1].time() < dt_time(15, 25):
-            return None, f'Latest candle is too early ({df.index[-1].strftime("%H:%M")} IST); session data appears incomplete'
+        # Require every expected 5-minute timestamp, not just a permissive count.
+        # Invalid OHLCV rows already removed above therefore invalidate the session too.
+        if not is_complete_session(df.index, '5m'):
+            return None, (
+                f'Incomplete 5-minute candle grid ({len(df)}/75 expected candles, '
+                'or one or more timestamps are missing/out of order)'
+            )
         return df.astype(float), None
     except Exception as e:
         return None, f'Data retrieval error: {type(e).__name__}: {e}'
