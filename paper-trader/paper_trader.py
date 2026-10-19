@@ -165,6 +165,19 @@ def simulate_symbol(symbol, df, equity, already_traded, session_pnl):
     return trades
 
 
+def select_portfolio_trade(candidates):
+    """Select the earliest eligible entry across the full watchlist; tie-break by ticker."""
+    if not candidates:
+        return None
+    return min(
+        candidates,
+        key=lambda trade: (
+            datetime.fromisoformat(trade["entry_time_ist"]),
+            trade["ticker"],
+        ),
+    )
+
+
 def main():
     now = datetime.now(TZ); today = now.date(); today_s = str(today)
     ledger = load_ledger()
@@ -210,21 +223,25 @@ def main():
         return
     if existing_idx is not None:
         print(f'Retrying prior data-limited run for {today_s}; the existing session will be replaced, not duplicated.')
-    # The scheduled workflow is after close. Do not run strategy for a date with stale/missing data.
+    # Evaluate the entire watchlist before selecting a portfolio entry. Otherwise the
+    # first ticker in SYMBOLS can win merely because it appears earlier in the list.
     all_trades = []; errors = []; data_count = 0
-    session_pnl = 0.0; already_traded = False
+    candidate_trades = []
     for symbol in SYMBOLS:
         df, err = download_today(symbol, today)
         if err:
-            errors.append(f'{symbol}: {err}'); continue
+            errors.append(f'{symbol}: {err}')
+            continue
         data_count += 1
-        trades = simulate_symbol(symbol, df, ledger['equity'], already_traded, session_pnl)
-        if trades:
-            all_trades.extend(trades)
-            session_pnl += sum(t['net_pnl'] for t in trades)
-            already_traded = True
-        if len(all_trades) >= MAX_TRADES or session_pnl <= -DAILY_LOSS_LIMIT:
-            break
+        candidate_trades.extend(
+            simulate_symbol(symbol, df, ledger['equity'], False, 0.0)
+        )
+
+    # Do not choose from a partial universe: missing symbols could contain an earlier signal.
+    if data_count == len(SYMBOLS):
+        selected_trade = select_portfolio_trade(candidate_trades)
+        if selected_trade is not None:
+            all_trades = [selected_trade]
     ledger['trades'].extend(all_trades)
     gross = round(sum(t['gross_pnl'] for t in all_trades), 2)
     costs = round(sum(t['estimated_costs'] for t in all_trades), 2)
