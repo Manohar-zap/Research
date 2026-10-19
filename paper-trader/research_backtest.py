@@ -23,6 +23,20 @@ COST_RATE = 0.001  # approximate all-in round-trip cost, not a fee quote
 STRATEGIES = ("VWAP_EMA", "OPENING_RANGE_BREAKOUT", "VWAP_MEAN_REVERSION")
 
 
+def filter_valid_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
+    """Keep only rows with positive prices, nonnegative volume, and internally consistent OHLC."""
+    required = ["Open", "High", "Low", "Close", "Volume"]
+    if not set(required).issubset(df.columns):
+        return pd.DataFrame(columns=required, index=df.index[:0])
+    clean = df[required].apply(pd.to_numeric, errors="coerce").dropna().copy()
+    return clean[
+        (clean["Open"] > 0) & (clean["High"] > 0) & (clean["Low"] > 0) & (clean["Close"] > 0)
+        & (clean["Volume"] >= 0)
+        & (clean["High"] >= clean[["Open", "Close", "Low"]].max(axis=1))
+        & (clean["Low"] <= clean[["Open", "Close", "High"]].min(axis=1))
+    ]
+
+
 def get_bars(symbol: str, interval: str) -> tuple[pd.DataFrame, str | None]:
     min_bars = 60 if interval == "5m" else 20
     min_last_time = dt_time(15, 25) if interval == "5m" else dt_time(15, 15)
@@ -41,14 +55,8 @@ def get_bars(symbol: str, interval: str) -> tuple[pd.DataFrame, str | None]:
         idx = idx.tz_localize(TZ) if idx.tz is None else idx.tz_convert(TZ)
         df.index = idx
         df = df[~df.index.duplicated(keep="last")].sort_index()
-        df = df[required].apply(pd.to_numeric, errors="coerce").dropna()
-        # Reject malformed bars instead of letting bad OHLCV values distort indicators or fills.
-        df = df[
-            (df["Open"] > 0) & (df["High"] > 0) & (df["Low"] > 0) & (df["Close"] > 0)
-            & (df["Volume"] >= 0)
-            & (df["High"] >= df[["Open", "Close", "Low"]].max(axis=1))
-            & (df["Low"] <= df[["Open", "Close", "High"]].min(axis=1))
-        ]
+        # Reject malformed bars before indicators and simulated fills.
+        df = filter_valid_ohlcv(df[required])
         df = df.between_time("09:15", "15:30")
         valid = []
         for d, day in df.groupby(df.index.date, sort=True):
