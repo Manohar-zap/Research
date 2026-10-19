@@ -16,6 +16,8 @@ SYMBOLS = ["RELIANCE.NS", "HDFCBANK.NS", "ICICIBANK.NS", "INFY.NS",
 START_EQUITY = 100_000.0
 RISK_PER_TRADE = 250.0
 MAX_NOTIONAL = 25_000.0
+MAX_TRADES_PER_DAY = 2
+DAILY_LOSS_LIMIT = 500.0
 COST_RATE = 0.001  # approximate all-in round-trip cost, not a fee quote
 MIN_BARS = 60
 STRATEGIES = ("VWAP_EMA", "OPENING_RANGE_BREAKOUT", "VWAP_MEAN_REVERSION")
@@ -148,7 +150,14 @@ def simulate(candidates: list[dict], dates: set) -> list[dict]:
     chosen = sorted((c for c in candidates if c["entry_time"].date() in dates),
                     key=lambda c: (c["entry_time"], c["ticker"]))
     trades, available_at, equity = [], None, START_EQUITY
+    daily_counts: dict[str, int] = {}
+    daily_pnl: dict[str, float] = {}
     for c in chosen:
+        d = c["date"]
+        if daily_counts.get(d, 0) >= MAX_TRADES_PER_DAY:
+            continue
+        if daily_pnl.get(d, 0.0) <= -DAILY_LOSS_LIMIT:
+            continue
         if available_at is not None and c["entry_time"] <= available_at:
             continue  # one portfolio position at a time for this strategy
         risk = c["entry"] - c["stop"]
@@ -164,6 +173,8 @@ def simulate(candidates: list[dict], dates: set) -> list[dict]:
                        "exit_time": c["exit_time"], "gross": gross, "costs": costs, "net": net,
                        "reason": c["reason"], "entry": c["entry"], "exit": c["exit"], "qty": qty})
         equity += net
+        daily_counts[d] = daily_counts.get(d, 0) + 1
+        daily_pnl[d] = daily_pnl.get(d, 0.0) + net
         available_at = c["exit_time"]
     return trades
 
@@ -201,7 +212,7 @@ def main():
               "## Methods",
               "- Compare three predeclared long-only strategies: VWAP/EMA momentum, opening-range breakout, and VWAP mean reversion.",
               "- 5-minute candles; enter at next candle open; one open portfolio position at a time per strategy.",
-              "- Planned risk ₹250/trade, max notional ₹25,000/trade; stop-first if stop and target touch in the same candle.",
+              "- Planned risk ₹250/trade, max notional ₹25,000/trade, max 2 trades/day and ₹500 daily-loss stop; stop-first if stop and target touch in the same candle.",
               "- Estimated 0.10% round-trip costs. This is a rough proxy, not an exact Groww charge schedule.",
               "- 70% chronological in-sample / 30% held-out out-of-sample split; no parameter search is performed.", "",
               "## Data coverage"]
