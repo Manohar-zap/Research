@@ -20,13 +20,14 @@ MAX_NOTIONAL = 25_000.0
 MAX_TRADES_PER_DAY = 2
 DAILY_LOSS_LIMIT = 500.0
 COST_RATE = 0.001  # approximate all-in round-trip cost, not a fee quote
-MIN_BARS = 60
 STRATEGIES = ("VWAP_EMA", "OPENING_RANGE_BREAKOUT", "VWAP_MEAN_REVERSION")
 
 
-def get_bars(symbol: str) -> tuple[pd.DataFrame, str | None]:
+def get_bars(symbol: str, interval: str) -> tuple[pd.DataFrame, str | None]:
+    min_bars = 60 if interval == "5m" else 20
+    min_last_time = dt_time(15, 25) if interval == "5m" else dt_time(15, 15)
     try:
-        raw = yf.download(symbol, period="60d", interval="5m", auto_adjust=False,
+        raw = yf.download(symbol, period="60d", interval=interval, auto_adjust=False,
                            progress=False, threads=False, prepost=False)
         if raw is None or raw.empty:
             return pd.DataFrame(), "No 5-minute data returned"
@@ -45,11 +46,14 @@ def get_bars(symbol: str) -> tuple[pd.DataFrame, str | None]:
         df = df.between_time("09:15", "15:30")
         valid = []
         for d, day in df.groupby(df.index.date, sort=True):
-            if len(day) >= MIN_BARS and day.index[-1].time() >= dt_time(15, 25):
+            if len(day) >= min_bars and day.index[-1].time() >= min_last_time:
                 valid.append(d)
         if not valid:
             return pd.DataFrame(), "No complete sessions passed candle-count/time checks"
         df = df[[ts.date() in set(valid) for ts in df.index]]
+        df.attrs["interval"] = interval
+        df.attrs["min_bars"] = min_bars
+        df.attrs["min_last_time"] = min_last_time
         return df, None
     except Exception as exc:
         return pd.DataFrame(), f"{type(exc).__name__}: {exc}"
@@ -57,6 +61,7 @@ def get_bars(symbol: str) -> tuple[pd.DataFrame, str | None]:
 
 def indicators(df: pd.DataFrame) -> pd.DataFrame:
     x = df.copy()
+    x.attrs.update(df.attrs)
     session = pd.Series(x.index.date, index=x.index)
     typical = (x["High"] + x["Low"] + x["Close"]) / 3
     volume = x["Volume"].clip(lower=0)
@@ -96,12 +101,14 @@ def indicators(df: pd.DataFrame) -> pd.DataFrame:
 
 def candidates_for(symbol: str, x: pd.DataFrame) -> list[dict]:
     out = []
+    min_bars = int(x.attrs.get("min_bars", 60))
+    min_last_time = x.attrs.get("min_last_time", dt_time(15, 25))
     col_for = {"VWAP_EMA": "SIG_VWAP_EMA",
                "OPENING_RANGE_BREAKOUT": "SIG_ORB",
                "VWAP_MEAN_REVERSION": "SIG_MEANREV"}
     for strategy, signal_col in col_for.items():
         for session_date, day in x.groupby(x.index.date, sort=True):
-            if len(day) < MIN_BARS or day.index[-1].time() < dt_time(15, 25):
+            if len(day) < min_bars or day.index[-1].time() < min_last_time:
                 continue
             flags = day[signal_col].fillna(False).astype(bool).to_numpy()
             for i, signal in enumerate(flags[:-1]):
