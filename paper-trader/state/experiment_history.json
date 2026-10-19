@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "runs": [
+    {
+      "experiment_version": "grid-v1",
+      "run_at_ist": "2026-10-20T02:45:26.240762+05:30",
+      "latest_data_date": "2026-10-19",
+      "interval": "15m",
+      "common_session_dates": 23,
+      "variant_count": 20,
+      "status": "DATA_LIMITED",
+      "selected_variant": null,
+      "training_metrics": null,
+      "validation_metrics": null,
+      "holdout_metrics": null,
+      "validation_rankings": []
+    }
+  ],
+  "updated_at_ist": "2026-10-20T02:45:26.240762+05:30",
+  "latest": {
+    "experiment_version": "grid-v1",
+    "run_at_ist": "2026-10-20T02:45:26.240762+05:30",
+    "latest_data_date": "2026-10-19",
+    "interval": "15m",
+    "common_session_dates": 23,
+    "variant_count": 20,
+    "status": "DATA_LIMITED",
+    "selected_variant": null,
+    "training_metrics": null,
+    "validation_metrics": null,
+    "holdout_metrics": null,
+    "validation_rankings": []
+  }
+}
