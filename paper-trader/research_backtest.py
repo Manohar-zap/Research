@@ -658,7 +658,21 @@ def main():
             report.append(f"- Variant selected on validation: {selected['id']}.")
             report.append(f"- Untouched holdout: {h['n']} trades; net ₹{h['net']:,.2f}; return {h['return']:.3f}%; win rate {fnum(h['winrate'], '%')}; PF {fnum(h['pf'])}; max drawdown {h['dd']:.3f}%.")
             report.append("- NIFTY 50 benchmark: " + nifty_benchmark(holdout_dates))
-            if len(all_dates) >= 30 and data_freshness_ok and h["n"] >= 15 and h["net"] > 0 and h["pf"] is not None and h["pf"] >= 1.2 and h["dd"] <= 2.0:
+            holdout_cost_stress_015 = net_pnl_at_cost_rate(holdout_trades, 0.0015)
+            holdout_cost_stress_020 = net_pnl_at_cost_rate(holdout_trades, 0.0020)
+            report += [
+                "",
+                "### Holdout transaction-cost sensitivity",
+                "Fixed holdout fills repriced at higher estimated round-trip costs:",
+                "| Assumed round-trip cost | Holdout net P/L |",
+                "|---:|---:|",
+                f"| 0.10% baseline | ₹{h['net']:,.2f} |",
+                f"| 0.15% | ₹{holdout_cost_stress_015:,.2f} |",
+                f"| 0.20% | ₹{holdout_cost_stress_020:,.2f} |",
+            ]
+            if holdout_cost_stress_015 <= 0:
+                report.append("- **Cost-stress gate failed:** the holdout must remain net-positive at 0.15% estimated round-trip costs to qualify for shadow tracking.")
+            if len(all_dates) >= 30 and data_freshness_ok and h["n"] >= 15 and h["net"] > 0 and h["pf"] is not None and h["pf"] >= 1.2 and h["dd"] <= 2.0 and holdout_cost_stress_015 > 0:
                 status = "SHADOW_PAPER_CANDIDATE"
                 report.append("Holdout gate passed for shadow paper tracking only. It is not a production strategy; 30 genuine forward paper trades are still required.")
             else:
