@@ -3,6 +3,7 @@ import unittest
 import pandas as pd
 
 from research_backtest import filter_valid_ohlcv, indicators
+from market_data import expected_session_times, is_complete_session
 from paper_trader import indicators as paper_indicators
 
 
@@ -40,6 +41,36 @@ class ValidOhlcvTests(unittest.TestCase):
         frame = pd.DataFrame({"Open": [100], "Close": [101]})
         clean = filter_valid_ohlcv(frame)
         self.assertTrue(clean.empty)
+
+    def test_expected_session_grids_match_nse_intraday_intervals(self):
+        self.assertEqual(len(expected_session_times("5m")), 75)
+        self.assertEqual(len(expected_session_times("15m")), 25)
+
+    def test_accepts_complete_timezone_aware_session_for_both_intervals(self):
+        for interval, frequency, count in (("5m", "5min", 75), ("15m", "15min", 25)):
+            with self.subTest(interval=interval):
+                index = pd.date_range(
+                    "2026-10-01 09:15",
+                    periods=count,
+                    freq=frequency,
+                    tz="Asia/Kolkata",
+                )
+                self.assertTrue(is_complete_session(index, interval))
+
+    def test_rejects_session_with_missing_midday_candle(self):
+        index = pd.date_range(
+            "2026-10-01 09:15", periods=75, freq="5min", tz="Asia/Kolkata"
+        ).delete(37)
+        # This 74-bar session used to pass the old len(df) >= 60 check.
+        self.assertFalse(is_complete_session(index, "5m"))
+
+    def test_rejects_duplicate_and_out_of_order_timestamps(self):
+        index = pd.date_range(
+            "2026-10-01 09:15", periods=75, freq="5min", tz="Asia/Kolkata"
+        )
+        self.assertFalse(is_complete_session(index.insert(1, index[0]), "5m"))
+        shuffled = index.delete(20).insert(20, index[21])
+        self.assertFalse(is_complete_session(shuffled, "5m"))
 
     def test_indicators_reset_between_sessions(self):
         first = pd.date_range("2026-10-01 09:15", periods=24, freq="5min")
