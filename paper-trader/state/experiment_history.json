@@ -3,7 +3,7 @@
   "runs": [
     {
       "experiment_version": "grid-v1",
-      "run_at_ist": "2026-10-20T02:55:00.880732+05:30",
+      "run_at_ist": "2026-10-20T02:58:15.240919+05:30",
       "latest_data_date": "2026-10-19",
       "interval": "15m",
       "common_session_dates": 23,
@@ -29,13 +29,13 @@
           },
           "train": {
             "n": 26,
-            "net": -949.845815290176,
-            "return": -0.949845815290176,
+            "net": -949.6745142647854,
+            "return": -0.9496745142647854,
             "winrate": 34.61538461538461,
-            "avg": -36.53253135731446,
-            "pf": 0.46621226273154326,
-            "dd": 1.322375653346573,
-            "costs": 635.3593127790178
+            "avg": -36.5259428563379,
+            "pf": 0.4662571477020335,
+            "dd": 1.3222049965881606,
+            "costs": 635.3593984723773
           },
           "validation": {
             "n": 8,
@@ -63,13 +63,13 @@
           },
           "train": {
             "n": 23,
-            "net": -814.710486474166,
-            "return": -0.8147104864741661,
+            "net": -814.5391854487755,
+            "return": -0.8145391854487755,
             "winrate": 30.434782608695656,
-            "avg": -35.422195064094176,
-            "pf": 0.49589179975775105,
-            "dd": 1.1253269292629553,
-            "costs": 563.2635827004569
+            "avg": -35.41474719342502,
+            "pf": 0.4959443667804471,
+            "dd": 1.1251561646973127,
+            "costs": 563.2636683938163
           },
           "validation": {
             "n": 8,
@@ -84,210 +84,6 @@
         },
         {
           "rank": 3,
-          "variant": {
-            "id": "orb_f12_s26_stop1_r2_vol1.2",
-            "strategy": "OPENING_RANGE_BREAKOUT",
-            "ema_fast": 12,
-            "ema_slow": 26,
-            "stop_atr": 1.0,
-            "target_r": 2.0,
-            "volume_multiplier": 1.2,
-            "deviation_atr": 0.0,
-            "rsi_max": 0.0
-          },
-          "train": {
-            "n": 10,
-            "net": -33.57019898333003,
-            "return": -0.03357019898333003,
-            "winrate": 40.0,
-            "avg": -3.357019898333003,
-            "pf": 0.8962816467338032,
-            "dd": 0.18982178991176324,
-            "costs": 241.61252250453404
-          },
-          "validation": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          }
-        },
-        {
-          "rank": 4,
-          "variant": {
-            "id": "meanrev_dev0.5_rsi30_stop1_r1.5",
-            "strategy": "VWAP_MEAN_REVERSION",
-            "ema_fast": 9,
-            "ema_slow": 21,
-            "stop_atr": 1.0,
-            "target_r": 1.5,
-            "volume_multiplier": 0.0,
-            "deviation_atr": 0.5,
-            "rsi_max": 30
-          },
-          "train": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          },
-          "validation": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          }
-        },
-        {
-          "rank": 5,
-          "variant": {
-            "id": "meanrev_dev0.5_rsi35_stop1_r1.5",
-            "strategy": "VWAP_MEAN_REVERSION",
-            "ema_fast": 9,
-            "ema_slow": 21,
-            "stop_atr": 1.0,
-            "target_r": 1.5,
-            "volume_multiplier": 0.0,
-            "deviation_atr": 0.5,
-            "rsi_max": 35
-          },
-          "train": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          },
-          "validation": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          }
-        },
-        {
-          "rank": 6,
-          "variant": {
-            "id": "meanrev_dev0.75_rsi35_stop1_r1.5",
-            "strategy": "VWAP_MEAN_REVERSION",
-            "ema_fast": 9,
-            "ema_slow": 21,
-            "stop_atr": 1.0,
-            "target_r": 1.5,
-            "volume_multiplier": 0.0,
-            "deviation_atr": 0.75,
-            "rsi_max": 35
-          },
-          "train": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          },
-          "validation": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          }
-        },
-        {
-          "rank": 7,
-          "variant": {
-            "id": "meanrev_dev0.75_rsi40_stop1_r2",
-            "strategy": "VWAP_MEAN_REVERSION",
-            "ema_fast": 9,
-            "ema_slow": 21,
-            "stop_atr": 1.0,
-            "target_r": 2.0,
-            "volume_multiplier": 0.0,
-            "deviation_atr": 0.75,
-            "rsi_max": 40
-          },
-          "train": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          },
-          "validation": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          }
-        },
-        {
-          "rank": 8,
-          "variant": {
-            "id": "meanrev_dev1_rsi35_stop1.5_r1.5",
-            "strategy": "VWAP_MEAN_REVERSION",
-            "ema_fast": 9,
-            "ema_slow": 21,
-            "stop_atr": 1.5,
-            "target_r": 1.5,
-            "volume_multiplier": 0.0,
-            "deviation_atr": 1.0,
-            "rsi_max": 35
-          },
-          "train": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          },
-          "validation": {
-            "n": 0,
-            "net": 0,
-            "return": 0.0,
-            "winrate": null,
-            "avg": null,
-            "pf": null,
-            "dd": 0.0,
-            "costs": 0
-          }
-        },
-        {
-          "rank": 9,
           "variant": {
             "id": "orb_f9_s21_stop1.5_r2_vol1.5",
             "strategy": "OPENING_RANGE_BREAKOUT",
@@ -321,7 +117,7 @@
           }
         },
         {
-          "rank": 10,
+          "rank": 4,
           "variant": {
             "id": "orb_f5_s13_stop1_r1.5_vol1",
             "strategy": "OPENING_RANGE_BREAKOUT",
@@ -355,7 +151,7 @@
           }
         },
         {
-          "rank": 11,
+          "rank": 5,
           "variant": {
             "id": "orb_f5_s13_stop1_r2_vol1.2",
             "strategy": "OPENING_RANGE_BREAKOUT",
@@ -389,7 +185,7 @@
           }
         },
         {
-          "rank": 12,
+          "rank": 6,
           "variant": {
             "id": "orb_f9_s21_stop1_r1.5_vol1",
             "strategy": "OPENING_RANGE_BREAKOUT",
@@ -423,7 +219,7 @@
           }
         },
         {
-          "rank": 13,
+          "rank": 7,
           "variant": {
             "id": "orb_f9_s21_stop1_r2_vol1.2",
             "strategy": "OPENING_RANGE_BREAKOUT",
@@ -457,7 +253,7 @@
           }
         },
         {
-          "rank": 14,
+          "rank": 8,
           "variant": {
             "id": "meanrev_dev0.5_rsi40_stop1_r2",
             "strategy": "VWAP_MEAN_REVERSION",
@@ -491,7 +287,7 @@
           }
         },
         {
-          "rank": 15,
+          "rank": 9,
           "variant": {
             "id": "vwapema_f9_s21_stop1_r1.5",
             "strategy": "VWAP_EMA",
@@ -525,7 +321,7 @@
           }
         },
         {
-          "rank": 16,
+          "rank": 10,
           "variant": {
             "id": "vwapema_f12_s26_stop1_r2",
             "strategy": "VWAP_EMA",
@@ -559,7 +355,7 @@
           }
         },
         {
-          "rank": 17,
+          "rank": 11,
           "variant": {
             "id": "vwapema_f9_s21_stop1.5_r2",
             "strategy": "VWAP_EMA",
@@ -593,7 +389,7 @@
           }
         },
         {
-          "rank": 18,
+          "rank": 12,
           "variant": {
             "id": "vwapema_f9_s21_stop1_r2",
             "strategy": "VWAP_EMA",
@@ -627,7 +423,7 @@
           }
         },
         {
-          "rank": 19,
+          "rank": 13,
           "variant": {
             "id": "vwapema_f8_s20_stop1.25_r2",
             "strategy": "VWAP_EMA",
@@ -661,7 +457,7 @@
           }
         },
         {
-          "rank": 20,
+          "rank": 14,
           "variant": {
             "id": "vwapema_f12_s26_stop1.5_r2",
             "strategy": "VWAP_EMA",
@@ -693,15 +489,219 @@
             "dd": 0.6412257188993098,
             "costs": 142.33426156398227
           }
+        },
+        {
+          "rank": 15,
+          "variant": {
+            "id": "orb_f12_s26_stop1_r2_vol1.2",
+            "strategy": "OPENING_RANGE_BREAKOUT",
+            "ema_fast": 12,
+            "ema_slow": 26,
+            "stop_atr": 1.0,
+            "target_r": 2.0,
+            "volume_multiplier": 1.2,
+            "deviation_atr": 0.0,
+            "rsi_max": 0.0
+          },
+          "train": {
+            "n": 10,
+            "net": -33.57019898333003,
+            "return": -0.03357019898333003,
+            "winrate": 40.0,
+            "avg": -3.357019898333003,
+            "pf": 0.8962816467338032,
+            "dd": 0.18982178991176324,
+            "costs": 241.61252250453404
+          },
+          "validation": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          }
+        },
+        {
+          "rank": 16,
+          "variant": {
+            "id": "meanrev_dev0.5_rsi30_stop1_r1.5",
+            "strategy": "VWAP_MEAN_REVERSION",
+            "ema_fast": 9,
+            "ema_slow": 21,
+            "stop_atr": 1.0,
+            "target_r": 1.5,
+            "volume_multiplier": 0.0,
+            "deviation_atr": 0.5,
+            "rsi_max": 30
+          },
+          "train": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          },
+          "validation": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          }
+        },
+        {
+          "rank": 17,
+          "variant": {
+            "id": "meanrev_dev0.5_rsi35_stop1_r1.5",
+            "strategy": "VWAP_MEAN_REVERSION",
+            "ema_fast": 9,
+            "ema_slow": 21,
+            "stop_atr": 1.0,
+            "target_r": 1.5,
+            "volume_multiplier": 0.0,
+            "deviation_atr": 0.5,
+            "rsi_max": 35
+          },
+          "train": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          },
+          "validation": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          }
+        },
+        {
+          "rank": 18,
+          "variant": {
+            "id": "meanrev_dev0.75_rsi35_stop1_r1.5",
+            "strategy": "VWAP_MEAN_REVERSION",
+            "ema_fast": 9,
+            "ema_slow": 21,
+            "stop_atr": 1.0,
+            "target_r": 1.5,
+            "volume_multiplier": 0.0,
+            "deviation_atr": 0.75,
+            "rsi_max": 35
+          },
+          "train": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          },
+          "validation": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          }
+        },
+        {
+          "rank": 19,
+          "variant": {
+            "id": "meanrev_dev0.75_rsi40_stop1_r2",
+            "strategy": "VWAP_MEAN_REVERSION",
+            "ema_fast": 9,
+            "ema_slow": 21,
+            "stop_atr": 1.0,
+            "target_r": 2.0,
+            "volume_multiplier": 0.0,
+            "deviation_atr": 0.75,
+            "rsi_max": 40
+          },
+          "train": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          },
+          "validation": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          }
+        },
+        {
+          "rank": 20,
+          "variant": {
+            "id": "meanrev_dev1_rsi35_stop1.5_r1.5",
+            "strategy": "VWAP_MEAN_REVERSION",
+            "ema_fast": 9,
+            "ema_slow": 21,
+            "stop_atr": 1.5,
+            "target_r": 1.5,
+            "volume_multiplier": 0.0,
+            "deviation_atr": 1.0,
+            "rsi_max": 35
+          },
+          "train": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          },
+          "validation": {
+            "n": 0,
+            "net": 0,
+            "return": 0.0,
+            "winrate": null,
+            "avg": null,
+            "pf": null,
+            "dd": 0.0,
+            "costs": 0
+          }
         }
       ],
-      "repeat_check_count": 4
+      "repeat_check_count": 5
     }
   ],
-  "updated_at_ist": "2026-10-20T02:55:00.880732+05:30",
+  "updated_at_ist": "2026-10-20T02:58:15.240919+05:30",
   "latest": {
     "experiment_version": "grid-v1",
-    "run_at_ist": "2026-10-20T02:55:00.880732+05:30",
+    "run_at_ist": "2026-10-20T02:58:15.240919+05:30",
     "latest_data_date": "2026-10-19",
     "interval": "15m",
     "common_session_dates": 23,
@@ -727,13 +727,13 @@
         },
         "train": {
           "n": 26,
-          "net": -949.845815290176,
-          "return": -0.949845815290176,
+          "net": -949.6745142647854,
+          "return": -0.9496745142647854,
           "winrate": 34.61538461538461,
-          "avg": -36.53253135731446,
-          "pf": 0.46621226273154326,
-          "dd": 1.322375653346573,
-          "costs": 635.3593127790178
+          "avg": -36.5259428563379,
+          "pf": 0.4662571477020335,
+          "dd": 1.3222049965881606,
+          "costs": 635.3593984723773
         },
         "validation": {
           "n": 8,
@@ -761,13 +761,13 @@
         },
         "train": {
           "n": 23,
-          "net": -814.710486474166,
-          "return": -0.8147104864741661,
+          "net": -814.5391854487755,
+          "return": -0.8145391854487755,
           "winrate": 30.434782608695656,
-          "avg": -35.422195064094176,
-          "pf": 0.49589179975775105,
-          "dd": 1.1253269292629553,
-          "costs": 563.2635827004569
+          "avg": -35.41474719342502,
+          "pf": 0.4959443667804471,
+          "dd": 1.1251561646973127,
+          "costs": 563.2636683938163
         },
         "validation": {
           "n": 8,
@@ -782,210 +782,6 @@
       },
       {
         "rank": 3,
-        "variant": {
-          "id": "orb_f12_s26_stop1_r2_vol1.2",
-          "strategy": "OPENING_RANGE_BREAKOUT",
-          "ema_fast": 12,
-          "ema_slow": 26,
-          "stop_atr": 1.0,
-          "target_r": 2.0,
-          "volume_multiplier": 1.2,
-          "deviation_atr": 0.0,
-          "rsi_max": 0.0
-        },
-        "train": {
-          "n": 10,
-          "net": -33.57019898333003,
-          "return": -0.03357019898333003,
-          "winrate": 40.0,
-          "avg": -3.357019898333003,
-          "pf": 0.8962816467338032,
-          "dd": 0.18982178991176324,
-          "costs": 241.61252250453404
-        },
-        "validation": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        }
-      },
-      {
-        "rank": 4,
-        "variant": {
-          "id": "meanrev_dev0.5_rsi30_stop1_r1.5",
-          "strategy": "VWAP_MEAN_REVERSION",
-          "ema_fast": 9,
-          "ema_slow": 21,
-          "stop_atr": 1.0,
-          "target_r": 1.5,
-          "volume_multiplier": 0.0,
-          "deviation_atr": 0.5,
-          "rsi_max": 30
-        },
-        "train": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        },
-        "validation": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        }
-      },
-      {
-        "rank": 5,
-        "variant": {
-          "id": "meanrev_dev0.5_rsi35_stop1_r1.5",
-          "strategy": "VWAP_MEAN_REVERSION",
-          "ema_fast": 9,
-          "ema_slow": 21,
-          "stop_atr": 1.0,
-          "target_r": 1.5,
-          "volume_multiplier": 0.0,
-          "deviation_atr": 0.5,
-          "rsi_max": 35
-        },
-        "train": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        },
-        "validation": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        }
-      },
-      {
-        "rank": 6,
-        "variant": {
-          "id": "meanrev_dev0.75_rsi35_stop1_r1.5",
-          "strategy": "VWAP_MEAN_REVERSION",
-          "ema_fast": 9,
-          "ema_slow": 21,
-          "stop_atr": 1.0,
-          "target_r": 1.5,
-          "volume_multiplier": 0.0,
-          "deviation_atr": 0.75,
-          "rsi_max": 35
-        },
-        "train": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        },
-        "validation": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        }
-      },
-      {
-        "rank": 7,
-        "variant": {
-          "id": "meanrev_dev0.75_rsi40_stop1_r2",
-          "strategy": "VWAP_MEAN_REVERSION",
-          "ema_fast": 9,
-          "ema_slow": 21,
-          "stop_atr": 1.0,
-          "target_r": 2.0,
-          "volume_multiplier": 0.0,
-          "deviation_atr": 0.75,
-          "rsi_max": 40
-        },
-        "train": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        },
-        "validation": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        }
-      },
-      {
-        "rank": 8,
-        "variant": {
-          "id": "meanrev_dev1_rsi35_stop1.5_r1.5",
-          "strategy": "VWAP_MEAN_REVERSION",
-          "ema_fast": 9,
-          "ema_slow": 21,
-          "stop_atr": 1.5,
-          "target_r": 1.5,
-          "volume_multiplier": 0.0,
-          "deviation_atr": 1.0,
-          "rsi_max": 35
-        },
-        "train": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        },
-        "validation": {
-          "n": 0,
-          "net": 0,
-          "return": 0.0,
-          "winrate": null,
-          "avg": null,
-          "pf": null,
-          "dd": 0.0,
-          "costs": 0
-        }
-      },
-      {
-        "rank": 9,
         "variant": {
           "id": "orb_f9_s21_stop1.5_r2_vol1.5",
           "strategy": "OPENING_RANGE_BREAKOUT",
@@ -1019,7 +815,7 @@
         }
       },
       {
-        "rank": 10,
+        "rank": 4,
         "variant": {
           "id": "orb_f5_s13_stop1_r1.5_vol1",
           "strategy": "OPENING_RANGE_BREAKOUT",
@@ -1053,7 +849,7 @@
         }
       },
       {
-        "rank": 11,
+        "rank": 5,
         "variant": {
           "id": "orb_f5_s13_stop1_r2_vol1.2",
           "strategy": "OPENING_RANGE_BREAKOUT",
@@ -1087,7 +883,7 @@
         }
       },
       {
-        "rank": 12,
+        "rank": 6,
         "variant": {
           "id": "orb_f9_s21_stop1_r1.5_vol1",
           "strategy": "OPENING_RANGE_BREAKOUT",
@@ -1121,7 +917,7 @@
         }
       },
       {
-        "rank": 13,
+        "rank": 7,
         "variant": {
           "id": "orb_f9_s21_stop1_r2_vol1.2",
           "strategy": "OPENING_RANGE_BREAKOUT",
@@ -1155,7 +951,7 @@
         }
       },
       {
-        "rank": 14,
+        "rank": 8,
         "variant": {
           "id": "meanrev_dev0.5_rsi40_stop1_r2",
           "strategy": "VWAP_MEAN_REVERSION",
@@ -1189,7 +985,7 @@
         }
       },
       {
-        "rank": 15,
+        "rank": 9,
         "variant": {
           "id": "vwapema_f9_s21_stop1_r1.5",
           "strategy": "VWAP_EMA",
@@ -1223,7 +1019,7 @@
         }
       },
       {
-        "rank": 16,
+        "rank": 10,
         "variant": {
           "id": "vwapema_f12_s26_stop1_r2",
           "strategy": "VWAP_EMA",
@@ -1257,7 +1053,7 @@
         }
       },
       {
-        "rank": 17,
+        "rank": 11,
         "variant": {
           "id": "vwapema_f9_s21_stop1.5_r2",
           "strategy": "VWAP_EMA",
@@ -1291,7 +1087,7 @@
         }
       },
       {
-        "rank": 18,
+        "rank": 12,
         "variant": {
           "id": "vwapema_f9_s21_stop1_r2",
           "strategy": "VWAP_EMA",
@@ -1325,7 +1121,7 @@
         }
       },
       {
-        "rank": 19,
+        "rank": 13,
         "variant": {
           "id": "vwapema_f8_s20_stop1.25_r2",
           "strategy": "VWAP_EMA",
@@ -1359,7 +1155,7 @@
         }
       },
       {
-        "rank": 20,
+        "rank": 14,
         "variant": {
           "id": "vwapema_f12_s26_stop1.5_r2",
           "strategy": "VWAP_EMA",
@@ -1390,6 +1186,210 @@
           "pf": 0.44317834188880895,
           "dd": 0.6412257188993098,
           "costs": 142.33426156398227
+        }
+      },
+      {
+        "rank": 15,
+        "variant": {
+          "id": "orb_f12_s26_stop1_r2_vol1.2",
+          "strategy": "OPENING_RANGE_BREAKOUT",
+          "ema_fast": 12,
+          "ema_slow": 26,
+          "stop_atr": 1.0,
+          "target_r": 2.0,
+          "volume_multiplier": 1.2,
+          "deviation_atr": 0.0,
+          "rsi_max": 0.0
+        },
+        "train": {
+          "n": 10,
+          "net": -33.57019898333003,
+          "return": -0.03357019898333003,
+          "winrate": 40.0,
+          "avg": -3.357019898333003,
+          "pf": 0.8962816467338032,
+          "dd": 0.18982178991176324,
+          "costs": 241.61252250453404
+        },
+        "validation": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        }
+      },
+      {
+        "rank": 16,
+        "variant": {
+          "id": "meanrev_dev0.5_rsi30_stop1_r1.5",
+          "strategy": "VWAP_MEAN_REVERSION",
+          "ema_fast": 9,
+          "ema_slow": 21,
+          "stop_atr": 1.0,
+          "target_r": 1.5,
+          "volume_multiplier": 0.0,
+          "deviation_atr": 0.5,
+          "rsi_max": 30
+        },
+        "train": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        },
+        "validation": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        }
+      },
+      {
+        "rank": 17,
+        "variant": {
+          "id": "meanrev_dev0.5_rsi35_stop1_r1.5",
+          "strategy": "VWAP_MEAN_REVERSION",
+          "ema_fast": 9,
+          "ema_slow": 21,
+          "stop_atr": 1.0,
+          "target_r": 1.5,
+          "volume_multiplier": 0.0,
+          "deviation_atr": 0.5,
+          "rsi_max": 35
+        },
+        "train": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        },
+        "validation": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        }
+      },
+      {
+        "rank": 18,
+        "variant": {
+          "id": "meanrev_dev0.75_rsi35_stop1_r1.5",
+          "strategy": "VWAP_MEAN_REVERSION",
+          "ema_fast": 9,
+          "ema_slow": 21,
+          "stop_atr": 1.0,
+          "target_r": 1.5,
+          "volume_multiplier": 0.0,
+          "deviation_atr": 0.75,
+          "rsi_max": 35
+        },
+        "train": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        },
+        "validation": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        }
+      },
+      {
+        "rank": 19,
+        "variant": {
+          "id": "meanrev_dev0.75_rsi40_stop1_r2",
+          "strategy": "VWAP_MEAN_REVERSION",
+          "ema_fast": 9,
+          "ema_slow": 21,
+          "stop_atr": 1.0,
+          "target_r": 2.0,
+          "volume_multiplier": 0.0,
+          "deviation_atr": 0.75,
+          "rsi_max": 40
+        },
+        "train": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        },
+        "validation": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        }
+      },
+      {
+        "rank": 20,
+        "variant": {
+          "id": "meanrev_dev1_rsi35_stop1.5_r1.5",
+          "strategy": "VWAP_MEAN_REVERSION",
+          "ema_fast": 9,
+          "ema_slow": 21,
+          "stop_atr": 1.5,
+          "target_r": 1.5,
+          "volume_multiplier": 0.0,
+          "deviation_atr": 1.0,
+          "rsi_max": 35
+        },
+        "train": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
+        },
+        "validation": {
+          "n": 0,
+          "net": 0,
+          "return": 0.0,
+          "winrate": null,
+          "avg": null,
+          "pf": null,
+          "dd": 0.0,
+          "costs": 0
         }
       }
     ]
