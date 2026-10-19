@@ -510,6 +510,19 @@ def main():
     report.append(f"- Selected interval: {used_interval}")
 
     common_dates = common_session_dates(data)
+    latest_common_date = max(common_dates) if common_dates else None
+    data_age_days = (now.date() - latest_common_date).days if latest_common_date else None
+    data_freshness_ok = data_age_days is not None and 0 <= data_age_days <= 5
+    if latest_common_date is not None:
+        report.append(
+            f"- Latest common complete session: {latest_common_date} "
+            f"({data_age_days} calendar day(s) before this run)."
+        )
+        if not data_freshness_ok:
+            report.append(
+                "- **Stale-data warning:** candidate qualification is blocked unless the "
+                "latest common complete session is between 0 and 5 calendar days old."
+            )
     if len(common_dates) >= 10:
         all_dates = common_dates
         common_set = set(common_dates)
@@ -645,7 +658,7 @@ def main():
             report.append(f"- Variant selected on validation: {selected['id']}.")
             report.append(f"- Untouched holdout: {h['n']} trades; net ₹{h['net']:,.2f}; return {h['return']:.3f}%; win rate {fnum(h['winrate'], '%')}; PF {fnum(h['pf'])}; max drawdown {h['dd']:.3f}%.")
             report.append("- NIFTY 50 benchmark: " + nifty_benchmark(holdout_dates))
-            if len(all_dates) >= 30 and h["n"] >= 15 and h["net"] > 0 and h["pf"] is not None and h["pf"] >= 1.2 and h["dd"] <= 2.0:
+            if len(all_dates) >= 30 and data_freshness_ok and h["n"] >= 15 and h["net"] > 0 and h["pf"] is not None and h["pf"] >= 1.2 and h["dd"] <= 2.0:
                 status = "SHADOW_PAPER_CANDIDATE"
                 report.append("Holdout gate passed for shadow paper tracking only. It is not a production strategy; 30 genuine forward paper trades are still required.")
             else:
@@ -660,6 +673,7 @@ def main():
         "- Variant ranking is based on validation; only the selected validation winner is evaluated on the final holdout.",
         "- The workflow never places live orders and never changes the active paper strategy automatically.",
         "- Yahoo Finance is unofficial, candle fills are approximate, and the 0.10% cost model is not exact.",
+        "- Only validated complete sessions are retained in a rolling 180-calendar-day cache; stale data blocks candidate qualification.",
         "- A daily ₹1,000–₹3,000 target is not forced; no-trade days are acceptable.",
     ]
 
