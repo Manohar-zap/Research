@@ -166,6 +166,58 @@ class ValidOhlcvTests(unittest.TestCase):
         self.assertIsNone(select_portfolio_trade([]))
 
 
+    def test_session_cache_accumulates_only_complete_dates(self):
+        def make_session(day, start_price):
+            index = pd.date_range(
+                f"{day} 09:15", periods=25, freq="15min", tz="Asia/Kolkata"
+            )
+            close = [start_price + i for i in range(25)]
+            return pd.DataFrame(
+                {
+                    "Open": close,
+                    "High": [value + 1 for value in close],
+                    "Low": [value - 1 for value in close],
+                    "Close": close,
+                    "Volume": [1000] * len(close),
+                },
+                index=index,
+            )
+
+        cached = make_session("2026-10-01", 100)
+        fresh = make_session("2026-10-02", 200)
+        merged = merge_session_history(cached, fresh, "15m")
+        self.assertEqual(len(merged), 50)
+        self.assertEqual(len(set(merged.index.date)), 2)
+        # Fresh history with a missing candle must not enter the cache.
+        incomplete = fresh.drop(fresh.index[10])
+        merged_with_gap = merge_session_history(cached, incomplete, "15m")
+        self.assertEqual(len(merged_with_gap), 25)
+        self.assertEqual(set(merged_with_gap.index.date), {cached.index[0].date()})
+
+    def test_session_cache_prefers_fresh_values_on_overlapping_timestamp(self):
+        index = pd.date_range(
+            "2026-10-01 09:15", periods=25, freq="15min", tz="Asia/Kolkata"
+        )
+        cached_close = [100 + i for i in range(25)]
+        fresh_close = [200 + i for i in range(25)]
+
+        def frame(closes):
+            return pd.DataFrame(
+                {
+                    "Open": closes,
+                    "High": [value + 1 for value in closes],
+                    "Low": [value - 1 for value in closes],
+                    "Close": closes,
+                    "Volume": [1000] * len(closes),
+                },
+                index=index,
+            )
+
+        merged = merge_session_history(frame(cached_close), frame(fresh_close), "15m")
+        self.assertEqual(len(merged), 25)
+        self.assertEqual(float(merged.iloc[0]["Close"]), 200.0)
+
+
 
 if __name__ == "__main__":
     unittest.main()
