@@ -27,6 +27,9 @@ jobs:
         working-directory: paper-trader
     steps:
       - uses: actions/checkout@v7
+      - name: Sync checkout to latest main before running
+        working-directory: .
+        run: git pull --rebase origin main
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
