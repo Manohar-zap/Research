@@ -1,6 +1,6 @@
 from __future__ import annotations
 import json, math
-from datetime import datetime, date
+from datetime import datetime, date, time as dt_time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import pandas as pd
@@ -13,7 +13,7 @@ REPORTS = ROOT / 'reports'
 START_CAPITAL = 100_000.0
 RISK_PER_TRADE = 250.0
 DAILY_LOSS_LIMIT = 500.0
-MAX_TRADES = 2
+MAX_TRADES = 1
 MAX_NOTIONAL = 25_000.0
 COST_RATE = 0.001  # rough 0.10% round-trip estimate; not broker-specific
 SYMBOLS = ['RELIANCE.NS','HDFCBANK.NS','ICICIBANK.NS','INFY.NS','TCS.NS','SBIN.NS','LT.NS','ITC.NS']
@@ -41,7 +41,9 @@ def download_today(symbol, today):
             df.columns = df.columns.get_level_values(0)
         idx = pd.to_datetime(df.index)
         if idx.tz is None:
-            idx = idx.tz_localize('UTC').tz_convert(TZ)
+            # Yahoo timestamps for NSE symbols should be interpreted as exchange-local
+            # when timezone metadata is absent; do not shift them from UTC.
+            idx = idx.tz_localize(TZ)
         else:
             idx = idx.tz_convert(TZ)
         df.index = idx
@@ -51,9 +53,12 @@ def download_today(symbol, today):
         required = {'Open','High','Low','Close','Volume'}
         if df.empty or not required.issubset(df.columns):
             return None, 'No verifiable current-session 5-minute candles'
-        # Reject very sparse feeds rather than fabricate a full session.
-        if len(df) < 12:
-            return None, f'Only {len(df)} current-session candles; insufficient data'
+        # A completed NSE session should normally provide far more than 12 five-minute
+        # candles. Refuse partial/stale feeds rather than make a decision from fragments.
+        if len(df) < 50:
+            return None, f'Only {len(df)} current-session candles; expected at least 50'
+        if df.index[-1].time() < dt_time(15, 15):
+            return None, f'Latest candle is too early ({df.index[-1].strftime("%H:%M")} IST); session data appears incomplete'
         return df.astype(float), None
     except Exception as e:
         return None, f'Data retrieval error: {type(e).__name__}: {e}'
@@ -129,12 +134,23 @@ def main():
     now = datetime.now(TZ); today = now.date(); today_s = str(today)
     ledger = load_ledger()
     REPORTS.mkdir(parents=True, exist_ok=True)
-    if any(s.get('date') == today_s for s in ledger['sessions']):
-        print(f'Already processed {today_s}; refusing duplicate ledger entry.')
-        return
     if today.weekday() >= 5:
         print('Weekend: no NSE cash session; no trades recorded.')
         return
+    # Do not let a manual diagnostic run before market close consume the date in the
+    # ledger. NSE cash trading normally ends at 15:30 IST; allow a small data-finalization buffer.
+    if now.time().replace(tzinfo=None) < dt_time(15, 40):
+        print(f'Before the post-close window ({now.isoformat()}); no report or ledger entry written.')
+        return
+    existing_idx = next(
+        (i for i, s in enumerate(ledger['sessions']) if s.get('date') == today_s),
+        None,
+    )
+    if existing_idx is not None and ledger['sessions'][existing_idx].get('status') != 'DATA_LIMITED':
+        print(f'Already finalized {today_s}; refusing a duplicate ledger entry.')
+        return
+    if existing_idx is not None:
+        print(f'Retrying prior data-limited run for {today_s}; the existing session will be replaced, not duplicated.')
     # The scheduled workflow is after close. Do not run strategy for a date with stale/missing data.
     all_trades = []; errors = []; data_count = 0
     session_pnl = 0.0; already_traded = False
@@ -156,7 +172,10 @@ def main():
     net = round(sum(t['net_pnl'] for t in all_trades), 2)
     ledger['equity'] = round(float(ledger['equity']) + net, 2)
     session = {'date': today_s, 'generated_at_ist': now.isoformat(), 'trades': len(all_trades), 'gross_pnl': gross, 'estimated_costs': costs, 'net_pnl': net, 'closing_equity': ledger['equity'], 'daily_return_pct': round(net / max(ledger['equity'] - net, 1) * 100, 4), 'data_symbols_validated': data_count, 'data_errors': errors, 'status': 'TRADED' if all_trades else ('NO_VALID_SIGNAL' if data_count else 'DATA_LIMITED')}
-    ledger['sessions'].append(session)
+    if existing_idx is None:
+        ledger['sessions'].append(session)
+    else:
+        ledger['sessions'][existing_idx] = session
     wins = [t['net_pnl'] for t in ledger['trades'] if t['net_pnl'] > 0]
     losses = [t['net_pnl'] for t in ledger['trades'] if t['net_pnl'] < 0]
     total_wins = sum(wins); total_losses = abs(sum(losses))
@@ -189,8 +208,12 @@ def main():
     if today.weekday() == 4:
         lines += ['', *summary('Weekly summary (recorded sessions only)', week)]
     import calendar
-    if today.day == calendar.monthrange(today.year, today.month)[1] or (today.month != (date.fromisoformat(ledger['sessions'][-2]['date']).month if len(ledger['sessions']) > 1 else today.month)):
-        lines += ['', *summary('Monthly summary (recorded sessions only)', month)]
+    month_last = date(today.year, today.month, calendar.monthrange(today.year, today.month)[1])
+    final_weekday = month_last
+    while final_weekday.weekday() >= 5:
+        final_weekday -= timedelta(days=1)
+    if today == final_weekday:
+        lines += ['', *summary('Monthly summary (recorded sessions only; weekday estimate, exchange holidays may differ)', month)]
     (REPORTS / f'{today_s}.md').write_text('\n'.join(lines) + '\n')
     save_json(STATE, ledger)
     print('\n'.join(lines))
