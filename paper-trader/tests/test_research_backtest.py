@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from research_backtest import common_session_dates, filter_valid_ohlcv, indicators
+from research_backtest import common_session_dates, filter_valid_ohlcv, indicators, net_pnl_at_cost_rate
 from market_data import expected_session_times, is_complete_session
 from paper_trader import indicators as paper_indicators, select_portfolio_trade
 
@@ -132,6 +132,20 @@ class ValidOhlcvTests(unittest.TestCase):
         self.assertTrue(pd.isna(calculated.iloc[0]["EMA21"]))
         self.assertTrue(pd.isna(calculated.iloc[19]["EMA21"]))
         self.assertFalse(pd.isna(calculated.iloc[20]["EMA21"]))
+
+    def test_cost_sensitivity_reprices_fixed_fills_without_changing_gross_pnl(self):
+        trades = [{"entry": 100.0, "exit": 110.0, "qty": 10}]
+        self.assertAlmostEqual(net_pnl_at_cost_rate(trades, 0.001), 98.95)
+        self.assertLess(
+            net_pnl_at_cost_rate(trades, 0.002),
+            net_pnl_at_cost_rate(trades, 0.001),
+        )
+
+    def test_cost_sensitivity_rejects_negative_or_nonfinite_rates(self):
+        trades = [{"entry": 100.0, "exit": 101.0, "qty": 1}]
+        for rate in (-0.001, float("nan"), float("inf")):
+            with self.subTest(rate=rate), self.assertRaises(ValueError):
+                net_pnl_at_cost_rate(trades, rate)
 
     def test_portfolio_selects_earliest_entry_not_watchlist_order(self):
         later = {
