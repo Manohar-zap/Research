@@ -1,0 +1,8 @@
+{
+  "starting_equity": 100000,
+  "equity": 100000,
+  "trades": [],
+  "sessions": [],
+  "created_at": "2026-10-20T00:00:00+05:30",
+  "note": "Initialized baseline; no historical trades have been fabricated."
+}
