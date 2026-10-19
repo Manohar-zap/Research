@@ -37,6 +37,16 @@ def filter_valid_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
     ]
 
 
+def session_ewm(series: pd.Series, span: int, min_periods: int = 1) -> pd.Series:
+    """Calculate an EMA independently for each trading session."""
+    result = pd.Series(float("nan"), index=series.index, dtype=float)
+    for _, session_values in series.groupby(series.index.date, sort=True):
+        result.loc[session_values.index] = session_values.ewm(
+            span=span, adjust=False, min_periods=min_periods
+        ).mean()
+    return result
+
+
 def get_bars(symbol: str, interval: str) -> tuple[pd.DataFrame, str | None]:
     min_bars = 60 if interval == "5m" else 20
     min_last_time = dt_time(15, 25) if interval == "5m" else dt_time(15, 15)
@@ -76,23 +86,38 @@ def get_bars(symbol: str, interval: str) -> tuple[pd.DataFrame, str | None]:
 def indicators(df: pd.DataFrame) -> pd.DataFrame:
     x = df.copy()
     x.attrs.update(df.attrs)
-    session = pd.Series(x.index.date, index=x.index)
+    session = pd.Index(x.index.date)
     typical = (x["High"] + x["Low"] + x["Close"]) / 3
     volume = x["Volume"].clip(lower=0)
-    x["VWAP"] = (typical * volume).groupby(session).cumsum() / volume.groupby(session).cumsum().replace(0, float("nan"))
-    x["EMA9"] = x["Close"].ewm(span=9, adjust=False).mean()
-    x["EMA21"] = x["Close"].ewm(span=21, adjust=False).mean()
-    prev_close = x["Close"].shift(1)
-    tr = pd.concat([x["High"] - x["Low"], (x["High"] - prev_close).abs(),
-                    (x["Low"] - prev_close).abs()], axis=1).max(axis=1)
-    x["ATR14"] = tr.rolling(14, min_periods=7).mean()
-    delta = x["Close"].diff()
-    gain = delta.clip(lower=0).ewm(alpha=1/14, adjust=False, min_periods=14).mean()
-    loss = (-delta.clip(upper=0)).ewm(alpha=1/14, adjust=False, min_periods=14).mean()
+    volume_cum = volume.groupby(session).cumsum()
+    x["VWAP"] = (typical * volume).groupby(session).cumsum() / volume_cum.replace(0, float("nan"))
+
+    # Match the live paper simulator: indicators restart at each market session.
+    x["EMA9"] = session_ewm(x["Close"], span=9)
+    x["EMA21"] = session_ewm(x["Close"], span=21)
+    prev_close = x["Close"].groupby(session).shift(1)
+    true_range = pd.concat(
+        [
+            x["High"] - x["Low"],
+            (x["High"] - prev_close).abs(),
+            (x["Low"] - prev_close).abs(),
+        ],
+        axis=1,
+    ).max(axis=1)
+    x["ATR14"] = true_range.groupby(session).transform(
+        lambda values: values.rolling(14, min_periods=7).mean()
+    )
+    delta = x["Close"].groupby(session).diff()
+    gain = delta.clip(lower=0).groupby(session).transform(
+        lambda values: values.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
+    )
+    loss = (-delta.clip(upper=0)).groupby(session).transform(
+        lambda values: values.ewm(alpha=1 / 14, adjust=False, min_periods=14).mean()
+    )
     x["RSI14"] = 100 - 100 / (1 + gain / loss.replace(0, float("nan")))
-    x["PREV_HIGH"] = x["High"].shift(1)
-    x["PREV_CLOSE"] = x["Close"].shift(1)
-    x["PREV_EMA9"] = x["EMA9"].shift(1)
+    x["PREV_HIGH"] = x["High"].groupby(session).shift(1)
+    x["PREV_CLOSE"] = x["Close"].groupby(session).shift(1)
+    x["PREV_EMA9"] = x["EMA9"].groupby(session).shift(1)
     x["OR_HIGH"] = float("nan")
     x["VOL_MED20"] = float("nan")
     for _, day in x.groupby(session, sort=True):
@@ -102,23 +127,29 @@ def indicators(df: pd.DataFrame) -> pd.DataFrame:
         x.loc[day.index, "VOL_MED20"] = day["Volume"].shift(1).rolling(20, min_periods=10).median()
     times = pd.Series([ts.time() for ts in x.index], index=x.index)
     active = (times >= dt_time(9, 45)) & (times <= dt_time(14, 45))
-    x["SIG_VWAP_EMA"] = (active & (x["EMA9"] > x["EMA21"]) & (x["Close"] > x["VWAP"])
-                         & (x["Close"] > x["PREV_HIGH"]) & (x["PREV_CLOSE"] <= x["PREV_HIGH"]))
-    x["SIG_ORB"] = (active & (times <= dt_time(14, 30)) & (x["EMA9"] > x["EMA21"])
-                    & (x["Close"] > x["OR_HIGH"]) & (x["PREV_CLOSE"] <= x["OR_HIGH"])
-                    & (x["Volume"] >= 1.2 * x["VOL_MED20"]))
-    x["SIG_MEANREV"] = (active & (x["Close"] < x["VWAP"] - 0.5 * x["ATR14"])
-                        & (x["RSI14"] < 40) & (x["PREV_CLOSE"] <= x["PREV_EMA9"])
-                        & (x["Close"] > x["EMA9"]))
+    x["SIG_VWAP_EMA"] = (
+        active & (x["EMA9"] > x["EMA21"]) & (x["Close"] > x["VWAP"])
+        & (x["Close"] > x["PREV_HIGH"]) & (x["PREV_CLOSE"] <= x["PREV_HIGH"])
+    )
+    x["SIG_ORB"] = (
+        active & (times <= dt_time(14, 30)) & (x["EMA9"] > x["EMA21"])
+        & (x["Close"] > x["OR_HIGH"]) & (x["PREV_CLOSE"] <= x["OR_HIGH"])
+        & (x["Volume"] >= 1.2 * x["VOL_MED20"])
+    )
+    x["SIG_MEANREV"] = (
+        active & (x["Close"] < x["VWAP"] - 0.5 * x["ATR14"])
+        & (x["RSI14"] < 40) & (x["PREV_CLOSE"] <= x["PREV_EMA9"])
+        & (x["Close"] > x["EMA9"])
+    )
     return x
 
 
 def candidates_for(symbol: str, x: pd.DataFrame, variant: dict) -> list[dict]:
     """Generate simulated candidate trades for one fixed parameter variant."""
     out = []
-    fast = x["Close"].ewm(span=int(variant["ema_fast"]), adjust=False).mean()
-    slow = x["Close"].ewm(span=int(variant["ema_slow"]), adjust=False).mean()
-    prev_fast = fast.shift(1)
+    fast = session_ewm(x["Close"], span=int(variant["ema_fast"]))
+    slow = session_ewm(x["Close"], span=int(variant["ema_slow"]))
+    prev_fast = fast.groupby(fast.index.date).shift(1)
     times = pd.Series([ts.time() for ts in x.index], index=x.index)
     active = (times >= dt_time(9, 45)) & (times <= dt_time(14, 45))
     strategy = variant["strategy"]
