@@ -37,6 +37,8 @@ jobs:
         run: pip install -r requirements.txt
       - name: Syntax-check research and daily simulator
         run: python -m py_compile research_backtest.py paper_trader.py
+      - name: Run market-data validation unit tests
+        run: python -m unittest discover -s tests -v
       - name: Run bounded experiment search
         run: python research_backtest.py
       - name: Commit research report
