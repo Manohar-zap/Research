@@ -179,8 +179,8 @@ def main():
             'This embedded holiday list covers the 2026 NSE equities calendar and must be updated when NSE publishes a new calendar.',
         ]
         holiday_path = REPORTS / f'{today_s}.md'
-        holiday_path.write_text('\\n'.join(holiday_lines) + '\\n')
-        print('\\n'.join(holiday_lines))
+        holiday_path.write_text('\n'.join(holiday_lines) + '\n')
+        print('\n'.join(holiday_lines))
         return
     # Do not let a manual diagnostic run before market close consume the date in the
     # ledger. NSE cash trading normally ends at 15:30 IST; allow a small data-finalization buffer.
