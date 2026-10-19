@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 from datetime import datetime, time as dt_time
 from pathlib import Path
@@ -202,6 +203,33 @@ def fnum(v, suffix=""):
     return "N/A" if v is None else f"{v:,.2f}{suffix}"
 
 
+def nifty_benchmark(test_dates: set) -> str:
+    try:
+        raw = yf.download("^NSEI", period="60d", interval="1d", auto_adjust=False,
+                          progress=False, threads=False)
+        if raw is None or raw.empty:
+            return "Unavailable: no daily NIFTY 50 candles returned."
+        nd = raw.copy()
+        if isinstance(nd.columns, pd.MultiIndex):
+            nd.columns = nd.columns.get_level_values(0)
+        if "Close" not in nd.columns:
+            return "Unavailable: closing-price column missing."
+        idx = pd.to_datetime(nd.index)
+        idx = idx.tz_localize(TZ) if idx.tz is None else idx.tz_convert(TZ)
+        nd.index = idx
+        nd = nd[[stamp.date() in test_dates for stamp in nd.index]].dropna(subset=["Close"])
+        if len(nd) < 2:
+            return "Unavailable: fewer than two NIFTY 50 closes overlap the out-of-sample dates."
+        first_date, last_date = nd.index[0].date(), nd.index[-1].date()
+        first_close, last_close = float(nd["Close"].iloc[0]), float(nd["Close"].iloc[-1])
+        change_pct = (last_close / first_close - 1) * 100 if first_close else float("nan")
+        return (f"{first_date} close ₹{first_close:,.2f} to {last_date} close ₹{last_close:,.2f}; "
+                f"close-to-close change {change_pct:.3f}% across the selected test dates. "
+                "This is a benchmark reference, not a directly risk-matched strategy comparison.")
+    except Exception as exc:
+        return f"Unavailable: {type(exc).__name__}: {exc}"
+
+
 def main():
     now = datetime.now(TZ)
     REPORTS.mkdir(parents=True, exist_ok=True)
@@ -238,6 +266,8 @@ def main():
         report += ["", "## Time split",
                    f"- In-sample: {min(train_dates)} to {max(train_dates)} ({len(train_dates)} session dates)",
                    f"- Held-out out-of-sample: {min(test_dates)} to {max(test_dates)} ({len(test_dates)} session dates)",
+                   "", "## NIFTY 50 benchmark",
+                   "- " + nifty_benchmark(test_dates),
                    "", "## Results",
                    "| Strategy | Period | Trades | Net P/L | Return | Win rate | Avg/trade | Profit factor | Max drawdown | Costs |",
                    "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
