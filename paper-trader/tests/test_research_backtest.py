@@ -3,6 +3,7 @@ import unittest
 import pandas as pd
 
 from research_backtest import filter_valid_ohlcv, indicators
+from paper_trader import indicators as paper_indicators
 
 
 class ValidOhlcvTests(unittest.TestCase):
@@ -41,10 +42,12 @@ class ValidOhlcvTests(unittest.TestCase):
         self.assertTrue(clean.empty)
 
     def test_indicators_reset_between_sessions(self):
-        first = pd.date_range("2026-10-01 09:15", periods=8, freq="5min")
-        second = pd.date_range("2026-10-02 09:15", periods=8, freq="5min")
+        first = pd.date_range("2026-10-01 09:15", periods=24, freq="5min")
+        second = pd.date_range("2026-10-02 09:15", periods=24, freq="5min")
         index = first.append(second)
-        close = [100 + i for i in range(8)] + [1000 + i for i in range(8)]
+        first_close = [100 + i for i in range(24)]
+        second_close = [1000 + i for i in range(24)]
+        close = first_close + second_close
         frame = pd.DataFrame(
             {
                 "Open": close,
@@ -55,11 +58,37 @@ class ValidOhlcvTests(unittest.TestCase):
             },
             index=index,
         )
+
         calculated = indicators(frame)
         first_bar_next_session = second[0]
-        self.assertEqual(calculated.loc[first_bar_next_session, "EMA9"], 1000.0)
+        self.assertTrue(pd.isna(calculated.loc[first_bar_next_session, "EMA9"]))
+        self.assertTrue(pd.isna(calculated.loc[first_bar_next_session, "EMA21"]))
         self.assertTrue(pd.isna(calculated.loc[first_bar_next_session, "PREV_CLOSE"]))
         self.assertEqual(calculated.loc[second[6], "ATR14"], 2.0)
+        expected_ema21 = pd.Series(second_close[:21]).ewm(
+            span=21, adjust=False, min_periods=21
+        ).mean().iloc[-1]
+        self.assertAlmostEqual(calculated.loc[second[20], "EMA21"], expected_ema21)
+
+    def test_paper_simulator_requires_full_ema_warmup(self):
+        session = pd.date_range("2026-10-01 09:15", periods=24, freq="5min")
+        close = [100 + i for i in range(24)]
+        frame = pd.DataFrame(
+            {
+                "Open": close,
+                "High": [value + 1 for value in close],
+                "Low": [value - 1 for value in close],
+                "Close": close,
+                "Volume": [1000] * len(close),
+            },
+            index=session,
+        )
+        calculated = paper_indicators(frame)
+        self.assertTrue(pd.isna(calculated.iloc[0]["EMA9"]))
+        self.assertTrue(pd.isna(calculated.iloc[0]["EMA21"]))
+        self.assertTrue(pd.isna(calculated.iloc[19]["EMA21"]))
+        self.assertFalse(pd.isna(calculated.iloc[20]["EMA21"]))
+
 
 
 if __name__ == "__main__":
