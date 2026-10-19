@@ -28,6 +28,10 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install -r requirements.txt
+      - name: Syntax-check simulator and market-data code
+        run: python -m py_compile paper_trader.py research_backtest.py market_data.py
+      - name: Run regression tests before simulation
+        run: python -m unittest discover -s tests -v
       - name: Run simulation
         run: python paper_trader.py
       - name: Commit reports and ledger
