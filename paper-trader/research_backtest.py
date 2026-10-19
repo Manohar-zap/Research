@@ -30,7 +30,7 @@ def get_bars(symbol: str, interval: str) -> tuple[pd.DataFrame, str | None]:
         raw = yf.download(symbol, period="60d", interval=interval, auto_adjust=False,
                            progress=False, threads=False, prepost=False)
         if raw is None or raw.empty:
-            return pd.DataFrame(), "No 5-minute data returned"
+            return pd.DataFrame(), "No {interval}-minute data returned"
         df = raw.copy()
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
