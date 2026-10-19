@@ -3,7 +3,7 @@
 This project is a **simulation only**. It never places brokerage orders and does not connect to Groww. Starting virtual equity is ₹1,00,000.
 
 ## Schedule
-GitHub Actions runs on weekdays at 10:15 UTC (15:45 IST) to allow a buffer after the NSE cash close. Runs may be delayed. Manual runs before 15:40 IST exit without changing the ledger. A data-limited run can be retried later the same day and replaces that date's provisional record rather than duplicating it.
+GitHub Actions tries at 10:15, 10:30 and 10:45 UTC (15:45, 16:00 and 16:15 IST) on weekdays. Later runs retry when the free data feed is incomplete. Manual runs before 15:40 IST exit without changing the ledger. A data-limited run can be retried later the same day and replaces that date's provisional record rather than duplicating it.
 
 ## Data and limitations
 - Uses Yahoo Finance via `yfinance` for NSE-listed symbols (`.NS`) and NIFTY 50 (`^NSEI`). This is an unofficial source, not an exchange-certified feed. Intraday data can be delayed, incomplete, or unavailable.
