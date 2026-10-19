@@ -327,7 +327,7 @@ def main():
         f"# Automated Strategy Experiment — {now:%Y-%m-%d}", "",
         f"**Run time (IST):** {now.isoformat()}",
         "**Mode:** offline historical research and paper-candidate screening only; no brokerage orders.",
-        f"**Experiment version:** grid-v1 · **Predeclared variants:** {len(variants)}", "",
+        f"**Experiment version:** grid-v2 · **Predeclared variants:** {len(variants)}", "",
         "## Automated experiment loop",
         "- Fetch free intraday OHLCV and validate complete sessions.",
         "- Run a fixed parameter grid across three strategy families.",
@@ -475,7 +475,7 @@ def main():
             report.append(f"- Variant selected on validation: {selected['id']}.")
             report.append(f"- Untouched holdout: {h['n']} trades; net ₹{h['net']:,.2f}; return {h['return']:.3f}%; win rate {fnum(h['winrate'], '%')}; PF {fnum(h['pf'])}; max drawdown {h['dd']:.3f}%.")
             report.append("- NIFTY 50 benchmark: " + nifty_benchmark(holdout_dates))
-            if h["n"] >= 15 and h["net"] > 0 and h["pf"] is not None and h["pf"] >= 1.2 and h["dd"] <= 2.0:
+            if len(all_dates) >= 30 and h["n"] >= 15 and h["net"] > 0 and h["pf"] is not None and h["pf"] >= 1.2 and h["dd"] <= 2.0:
                 status = "SHADOW_PAPER_CANDIDATE"
                 report.append("Holdout gate passed for shadow paper tracking only. It is not a production strategy; 30 genuine forward paper trades are still required.")
             else:
