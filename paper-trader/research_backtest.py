@@ -493,7 +493,7 @@ def main():
     ]
 
     record = {
-        "experiment_version": "grid-v1",
+        "experiment_version": "grid-v2",
         "run_at_ist": now.isoformat(),
         "latest_data_date": data_end,
         "interval": used_interval,
@@ -528,7 +528,7 @@ def main():
     if status == "SHADOW_PAPER_CANDIDATE" and selected:
         save_json(candidate_path, {
             "status": status,
-            "experiment_version": "grid-v1",
+            "experiment_version": "grid-v2",
             "selected_at_ist": now.isoformat(),
             "latest_data_date": data_end,
             "variant": selected,
