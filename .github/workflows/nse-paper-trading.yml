@@ -3,8 +3,9 @@ name: NSE Paper Trading
 on:
   workflow_dispatch:
   schedule:
-    # 3:45 PM IST, Monday-Friday (GitHub cron uses UTC)
-    - cron: "15 10 * * 1-5"
+    # Try at 3:45, 4:00 and 4:15 PM IST, Monday-Friday (cron uses UTC).
+    # Later runs retry if free intraday data was delayed on the first run.
+    - cron: "15,30,45 10 * * 1-5"
 
 permissions:
   contents: write
