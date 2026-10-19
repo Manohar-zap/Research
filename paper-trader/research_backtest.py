@@ -99,60 +99,80 @@ def indicators(df: pd.DataFrame) -> pd.DataFrame:
     return x
 
 
-def candidates_for(symbol: str, x: pd.DataFrame) -> list[dict]:
+def candidates_for(symbol: str, x: pd.DataFrame, variant: dict) -> list[dict]:
+    """Generate simulated candidate trades for one fixed parameter variant."""
     out = []
+    fast = x["Close"].ewm(span=int(variant["ema_fast"]), adjust=False).mean()
+    slow = x["Close"].ewm(span=int(variant["ema_slow"]), adjust=False).mean()
+    prev_fast = fast.shift(1)
+    times = pd.Series([ts.time() for ts in x.index], index=x.index)
+    active = (times >= dt_time(9, 45)) & (times <= dt_time(14, 45))
+    strategy = variant["strategy"]
+    if strategy == "VWAP_EMA":
+        signal = (active & (fast > slow) & (x["Close"] > x["VWAP"]) &
+                  (x["Close"] > x["PREV_HIGH"]) & (x["PREV_CLOSE"] <= x["PREV_HIGH"]))
+    elif strategy == "OPENING_RANGE_BREAKOUT":
+        signal = (active & (times <= dt_time(14, 30)) & (fast > slow) &
+                  (x["Close"] > x["OR_HIGH"]) & (x["PREV_CLOSE"] <= x["OR_HIGH"]) &
+                  (x["Volume"] >= float(variant["volume_multiplier"]) * x["VOL_MED20"]))
+    elif strategy == "VWAP_MEAN_REVERSION":
+        signal = (active & (x["Close"] < x["VWAP"] - float(variant["deviation_atr"]) * x["ATR14"]) &
+                  (x["RSI14"] < float(variant["rsi_max"])) &
+                  (x["PREV_CLOSE"] <= prev_fast) & (x["Close"] > fast))
+    else:
+        raise ValueError(f"Unknown strategy: {strategy}")
+
     min_bars = int(x.attrs.get("min_bars", 60))
     min_last_time = x.attrs.get("min_last_time", dt_time(15, 25))
-    col_for = {"VWAP_EMA": "SIG_VWAP_EMA",
-               "OPENING_RANGE_BREAKOUT": "SIG_ORB",
-               "VWAP_MEAN_REVERSION": "SIG_MEANREV"}
-    for strategy, signal_col in col_for.items():
-        for session_date, day in x.groupby(x.index.date, sort=True):
-            if len(day) < min_bars or day.index[-1].time() < min_last_time:
+    signal = signal.fillna(False).astype(bool)
+    for session_date, day in x.groupby(x.index.date, sort=True):
+        if len(day) < min_bars or day.index[-1].time() < min_last_time:
+            continue
+        flags = signal.loc[day.index].to_numpy()
+        for i, triggered in enumerate(flags[:-1]):
+            if not triggered:
                 continue
-            flags = day[signal_col].fillna(False).astype(bool).to_numpy()
-            for i, signal in enumerate(flags[:-1]):
-                if not signal:
+            signal_time, entry_time = day.index[i], day.index[i + 1]
+            if entry_time.time() > dt_time(14, 50):
+                continue
+            atr = float(day["ATR14"].iloc[i])
+            entry = float(day["Open"].iloc[i + 1])
+            if not (math.isfinite(atr) and atr > 0 and math.isfinite(entry) and entry > 0):
+                continue
+            risk = atr * float(variant["stop_atr"])
+            stop = entry - risk
+            target = entry + float(variant["target_r"]) * risk
+            if strategy == "VWAP_MEAN_REVERSION":
+                vwap = float(day["VWAP"].iloc[i])
+                if not math.isfinite(vwap):
                     continue
-                signal_time, entry_time = day.index[i], day.index[i + 1]
-                if entry_time.time() > dt_time(14, 50):
-                    continue
-                atr = float(day["ATR14"].iloc[i])
-                entry = float(day["Open"].iloc[i + 1])
-                if not (math.isfinite(atr) and atr > 0 and math.isfinite(entry) and entry > 0):
-                    continue
-                stop = entry - atr
-                if strategy == "VWAP_MEAN_REVERSION":
-                    vwap = float(day["VWAP"].iloc[i])
-                    if not math.isfinite(vwap) or vwap <= entry + 0.25 * atr:
-                        continue
-                    target = min(vwap, entry + 2 * atr)
-                else:
-                    target = entry + 2 * atr
-                if stop <= 0 or target <= entry:
-                    continue
-                exit_price, exit_time, reason = None, None, None
-                for j in range(i + 1, len(day)):
-                    bar, ts = day.iloc[j], day.index[j]
-                    op, low, high = float(bar["Open"]), float(bar["Low"]), float(bar["High"])
-                    if low <= stop:
-                        exit_price = min(op, stop) if op < stop else stop
-                        exit_time, reason = ts, "Stop-loss"
-                        break
-                    if high >= target:
-                        exit_price, exit_time, reason = target, ts, "Target"
-                        break
-                    if ts.time() >= dt_time(15, 15):
-                        exit_price, exit_time, reason = float(bar["Close"]), ts, "End-of-day exit"
-                        break
-                if exit_price is None:
-                    exit_price, exit_time, reason = float(day["Close"].iloc[-1]), day.index[-1], "Last available candle"
-                out.append({"date": str(session_date), "strategy": strategy, "ticker": symbol,
-                            "signal_time": signal_time, "entry_time": entry_time,
-                            "entry": entry, "exit_time": exit_time, "exit": exit_price,
-                            "stop": stop, "target": target, "reason": reason})
+                target = min(vwap, target)
+            if stop <= 0 or target <= entry:
+                continue
+            exit_price, exit_time, reason = None, None, None
+            for j in range(i + 1, len(day)):
+                bar, ts = day.iloc[j], day.index[j]
+                op, low, high = float(bar["Open"]), float(bar["Low"]), float(bar["High"])
+                # Conservative fill assumption if stop and target touch in one candle.
+                if low <= stop:
+                    exit_price = min(op, stop) if op < stop else stop
+                    exit_time, reason = ts, "Stop-loss"
+                    break
+                if high >= target:
+                    exit_price, exit_time, reason = target, ts, "Target"
+                    break
+                if ts.time() >= dt_time(15, 15):
+                    exit_price, exit_time, reason = float(bar["Close"]), ts, "End-of-day exit"
+                    break
+            if exit_price is None:
+                exit_price, exit_time, reason = float(day["Close"].iloc[-1]), day.index[-1], "Last available candle"
+            out.append({
+                "date": str(session_date), "strategy": strategy, "variant_id": variant["id"],
+                "parameters": variant, "ticker": symbol, "signal_time": signal_time,
+                "entry_time": entry_time, "exit_time": exit_time, "entry": entry,
+                "exit": exit_price, "stop": stop, "target": target, "reason": reason,
+            })
     return out
-
 
 def simulate(candidates: list[dict], dates: set) -> list[dict]:
     chosen = sorted((c for c in candidates if c["entry_time"].date() in dates),
