@@ -210,6 +210,19 @@ def fnum(v, suffix=""):
     return "N/A" if v is None else f"{v:,.2f}{suffix}"
 
 
+def load_universe(interval: str):
+    data, failures = {}, []
+    for symbol in SYMBOLS:
+        df, err = get_bars(symbol, interval)
+        if err:
+            failures.append((symbol, err))
+        else:
+            x = indicators(df)
+            data[symbol] = x
+    dates = sorted({ts.date() for x in data.values() for ts in x.index})
+    return data, failures, dates
+
+
 def nifty_benchmark(test_dates: set) -> str:
     try:
         raw = yf.download("^NSEI", period="60d", interval="1d", auto_adjust=False,
@@ -246,28 +259,32 @@ def main():
               "**Initial equity per strategy/split:** ₹1,00,000", "",
               "## Methods",
               "- Compare three predeclared long-only strategies: VWAP/EMA momentum, opening-range breakout, and VWAP mean reversion.",
-              "- 5-minute candles; enter at next candle open; one open portfolio position at a time per strategy.",
+              "- Prefer 5-minute candles; if fewer than 15 usable session dates are found, retry the full stock universe at 15-minute candles rather than mix intervals.",
+              "- Entries use the next candle open; one open portfolio position at a time per strategy."
               "- Planned risk ₹250/trade, max notional ₹25,000/trade, max 2 trades/day and ₹500 daily-loss stop; stop-first if stop and target touch in the same candle.",
               "- Estimated 0.10% round-trip costs. This is a rough proxy, not an exact Groww charge schedule.",
               "- 70% chronological in-sample / 30% held-out out-of-sample split; no parameter search is performed.", "",
               "## Data coverage"]
-    data, failures = {}, []
-    for symbol in SYMBOLS:
-        df, err = get_bars(symbol)
-        if err:
-            failures.append((symbol, err))
-        else:
-            x = indicators(df)
-            data[symbol] = x
-            dates = sorted(set(x.index.date))
-            report.append(f"- {symbol}: {len(x)} candles, {len(dates)} complete sessions ({dates[0]} to {dates[-1]})")
+    data, failures, all_dates = load_universe("5m")
+    used_interval = "5m"
+    primary_date_count = len(all_dates)
+    if primary_date_count < 15:
+        fallback_data, fallback_failures, fallback_dates = load_universe("15m")
+        if len(fallback_dates) > primary_date_count:
+            data, failures, all_dates, used_interval = fallback_data, fallback_failures, fallback_dates, "15m"
+            report.append(f"- Fallback applied: 5-minute history had {primary_date_count} complete session dates; using 15-minute history for the entire universe ({len(all_dates)} dates).")
+    report.append(f"- Selected research interval: {used_interval}")
+    for symbol, x in data.items():
+        dates = sorted(set(x.index.date))
+        report.append(f"- {symbol}: {len(x)} candles, {len(dates)} complete sessions ({dates[0]} to {dates[-1]})")
     for symbol, error in failures:
         report.append(f"- {symbol}: not usable — {error}")
-    all_dates = sorted({ts.date() for x in data.values() for ts in x.index})
-    if not data or len(all_dates) < 15:
-        report += ["", "## Decision", "**DATA-LIMITED:** insufficient verified session history to compare strategies. No strategy is promoted; no results are invented.",
-                   "Retry later or supply a more reliable historical intraday feed."]
+    if not data or len(all_dates) < 10:
+        report += ["", "## Decision", "**DATA-LIMITED:** fewer than 10 usable session dates remained after trying both 5-minute and 15-minute data. No strategy is rated or promoted; no results are invented.",
+                   "Retry later or obtain reliable historical intraday data."]
     else:
+        if len(all_dates) < 30:
+            report += ["", f"**Sample warning:** only {len(all_dates)} usable session dates. Results below are exploratory only and cannot establish a strategy edge."]
         cut = max(1, min(len(all_dates) - 1, int(len(all_dates) * 0.70)))
         train_dates, test_dates = set(all_dates[:cut]), set(all_dates[cut:])
         report += ["", "## Time split",
