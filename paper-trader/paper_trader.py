@@ -53,11 +53,11 @@ def download_today(symbol, today):
         required = {'Open','High','Low','Close','Volume'}
         if df.empty or not required.issubset(df.columns):
             return None, 'No verifiable current-session 5-minute candles'
-        # A completed NSE session should normally provide far more than 12 five-minute
+        # A completed NSE session should normally provide around 75 five-minute
         # candles. Refuse partial/stale feeds rather than make a decision from fragments.
-        if len(df) < 50:
-            return None, f'Only {len(df)} current-session candles; expected at least 50'
-        if df.index[-1].time() < dt_time(15, 15):
+        if len(df) < 60:
+            return None, f'Only {len(df)} current-session candles; expected at least 60'
+        if df.index[-1].time() < dt_time(15, 25):
             return None, f'Latest candle is too early ({df.index[-1].strftime("%H:%M")} IST); session data appears incomplete'
         return df.astype(float), None
     except Exception as e:
