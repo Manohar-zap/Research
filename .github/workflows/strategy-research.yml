@@ -1,0 +1,39 @@
+name: Strategy Research Backtest
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 5:00 PM IST on weekdays, after the daily paper-trading retries
+    - cron: "30 11 * * 1-5"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: strategy-research-backtest
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: paper-trader
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Backtest predeclared strategies
+        run: python research_backtest.py
+      - name: Commit research report
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add paper-trader/reports/research-*.md
+          git diff --cached --quiet || git commit -m "Update strategy research backtest"
+          git push
