@@ -100,8 +100,9 @@ def indicators(df):
     typical = (x['High'] + x['Low'] + x['Close']) / 3
     vol = x['Volume'].clip(lower=0)
     x['VWAP'] = (typical * vol).cumsum() / vol.cumsum().replace(0, float('nan'))
-    x['EMA9'] = x['Close'].ewm(span=9, adjust=False).mean()
-    x['EMA21'] = x['Close'].ewm(span=21, adjust=False).mean()
+    # Wait for each EMA's full session-local warm-up before generating signals.
+    x['EMA9'] = x['Close'].ewm(span=9, adjust=False, min_periods=9).mean()
+    x['EMA21'] = x['Close'].ewm(span=21, adjust=False, min_periods=21).mean()
     prev_close = x['Close'].shift(1)
     tr = pd.concat([x['High'] - x['Low'], (x['High'] - prev_close).abs(), (x['Low'] - prev_close).abs()], axis=1).max(axis=1)
     x['ATR14'] = tr.rolling(14, min_periods=7).mean()
