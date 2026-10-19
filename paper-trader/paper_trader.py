@@ -216,7 +216,7 @@ def main():
     costs = round(sum(t['estimated_costs'] for t in all_trades), 2)
     net = round(sum(t['net_pnl'] for t in all_trades), 2)
     ledger['equity'] = round(float(ledger['equity']) + net, 2)
-    session = {'date': today_s, 'generated_at_ist': now.isoformat(), 'trades': len(all_trades), 'gross_pnl': gross, 'estimated_costs': costs, 'net_pnl': net, 'closing_equity': ledger['equity'], 'daily_return_pct': round(net / max(ledger['equity'] - net, 1) * 100, 4), 'data_symbols_validated': data_count, 'data_errors': errors, 'status': 'TRADED' if all_trades else ('NO_VALID_SIGNAL' if data_count else 'DATA_LIMITED')}
+    session = {'date': today_s, 'generated_at_ist': now.isoformat(), 'trades': len(all_trades), 'gross_pnl': gross, 'estimated_costs': costs, 'net_pnl': net, 'closing_equity': ledger['equity'], 'daily_return_pct': round(net / max(ledger['equity'] - net, 1) * 100, 4), 'data_symbols_validated': data_count, 'data_errors': errors, 'status': 'TRADED' if all_trades else ('NO_VALID_SIGNAL' if data_count == len(SYMBOLS) else 'DATA_LIMITED')}
     if existing_idx is None:
         ledger['sessions'].append(session)
     else:
