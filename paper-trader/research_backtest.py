@@ -22,6 +22,8 @@ MAX_NOTIONAL = 25_000.0
 MAX_TRADES_PER_DAY = 2
 DAILY_LOSS_LIMIT = 500.0
 COST_RATE = 0.001  # approximate all-in round-trip cost, not a fee quote
+MIN_COMMON_SESSIONS_FOR_QUALIFICATION = 60
+MIN_FORWARD_PAPER_TRADES = 30
 STRATEGIES = ("VWAP_EMA", "OPENING_RANGE_BREAKOUT", "VWAP_MEAN_REVERSION")
 
 
@@ -348,6 +350,27 @@ def net_pnl_at_cost_rate(trades: list[dict], rate: float) -> float:
     return total
 
 
+
+def qualifies_shadow_candidate(
+    common_sessions: int,
+    data_freshness_ok: bool,
+    holdout_metrics: dict,
+    holdout_net_at_015_cost: float,
+) -> bool:
+    """Strict qualification gate; passing permits shadow tracking only."""
+    return (
+        common_sessions >= MIN_COMMON_SESSIONS_FOR_QUALIFICATION
+        and data_freshness_ok
+        and holdout_metrics.get("n", 0) >= 15
+        and holdout_metrics.get("net", float("-inf")) > 0
+        and holdout_metrics.get("pf") is not None
+        and holdout_metrics["pf"] >= 1.2
+        and holdout_metrics.get("dd", float("inf")) <= 2.0
+        and math.isfinite(holdout_net_at_015_cost)
+        and holdout_net_at_015_cost > 0
+    )
+
+
 def stats(trades: list[dict]) -> dict:
     p = [t["net"] for t in trades]
     win, loss = [v for v in p if v > 0], [v for v in p if v < 0]
@@ -565,8 +588,8 @@ def main():
         ]
     else:
         n = len(all_dates)
-        if n < 30:
-            report.append(f"- **Exploratory sample warning:** only {n} common sessions. Results can rank experiments for research, but cannot qualify a candidate for paper tracking.")
+        if n < MIN_COMMON_SESSIONS_FOR_QUALIFICATION:
+            report.append(f"- **Exploratory sample warning:** only {n} common sessions; at least {MIN_COMMON_SESSIONS_FOR_QUALIFICATION} are required before any candidate can qualify for shadow tracking.")
         train_end = int(n * 0.60)
         val_end = int(n * 0.80)
         train_dates = set(all_dates[:train_end])
@@ -672,9 +695,9 @@ def main():
             ]
             if holdout_cost_stress_015 <= 0:
                 report.append("- **Cost-stress gate failed:** the holdout must remain net-positive at 0.15% estimated round-trip costs to qualify for shadow tracking.")
-            if len(all_dates) >= 30 and data_freshness_ok and h["n"] >= 15 and h["net"] > 0 and h["pf"] is not None and h["pf"] >= 1.2 and h["dd"] <= 2.0 and holdout_cost_stress_015 > 0:
+            if qualifies_shadow_candidate(len(all_dates), data_freshness_ok, h, holdout_cost_stress_015):
                 status = "SHADOW_PAPER_CANDIDATE"
-                report.append("Holdout gate passed for shadow paper tracking only. It is not a production strategy; 30 genuine forward paper trades are still required.")
+                report.append("Holdout gate passed for shadow paper tracking only. It is not a production strategy; at least 30 genuine forward paper trades are still required.")
             else:
                 status = "NOT_QUALIFIED"
                 report.append("Holdout gate not passed. Keep the baseline unchanged and continue testing on fresh data.")
@@ -733,7 +756,7 @@ def main():
             "variant": selected,
             "validation_metrics": validation_metrics,
             "holdout_metrics": holdout_metrics,
-            "next_step": "Start a separate shadow portfolio and require 30 genuine forward paper trades before considering any strategy change. Never place live orders.",
+            "next_step": "Start a separate shadow portfolio and require at least 30 genuine forward paper trades before considering any strategy change. Never place live orders.",
         })
     elif candidate_path.exists():
         candidate_path.unlink()
