@@ -2,7 +2,7 @@ import unittest
 
 import pandas as pd
 
-from research_backtest import common_session_dates, filter_valid_ohlcv, indicators, merge_session_history, net_pnl_at_cost_rate
+from research_backtest import common_session_dates, filter_valid_ohlcv, indicators, merge_session_history, net_pnl_at_cost_rate, qualifies_shadow_candidate
 from market_data import expected_session_times, is_complete_session
 from paper_trader import indicators as paper_indicators, select_portfolio_trade
 
@@ -132,6 +132,30 @@ class ValidOhlcvTests(unittest.TestCase):
         self.assertTrue(pd.isna(calculated.iloc[0]["EMA21"]))
         self.assertTrue(pd.isna(calculated.iloc[19]["EMA21"]))
         self.assertFalse(pd.isna(calculated.iloc[20]["EMA21"]))
+
+
+    def test_shadow_qualification_requires_60_common_sessions(self):
+        good_metrics = {"n": 20, "net": 500.0, "pf": 1.5, "dd": 1.0}
+        self.assertFalse(
+            qualifies_shadow_candidate(59, True, good_metrics, 300.0)
+        )
+        self.assertTrue(
+            qualifies_shadow_candidate(60, True, good_metrics, 300.0)
+        )
+
+    def test_shadow_qualification_rejects_stale_data_and_cost_fragility(self):
+        good_metrics = {"n": 20, "net": 500.0, "pf": 1.5, "dd": 1.0}
+        self.assertFalse(
+            qualifies_shadow_candidate(80, False, good_metrics, 300.0)
+        )
+        self.assertFalse(
+            qualifies_shadow_candidate(80, True, good_metrics, 0.0)
+        )
+        self.assertFalse(
+            qualifies_shadow_candidate(
+                80, True, {"n": 20, "net": 500.0, "pf": 1.1, "dd": 1.0}, 300.0
+            )
+        )
 
     def test_cost_sensitivity_reprices_fixed_fills_without_changing_gross_pnl(self):
         trades = [{"entry": 100.0, "exit": 110.0, "qty": 10}]
