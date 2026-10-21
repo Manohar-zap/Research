@@ -1,8 +1,31 @@
 {
   "starting_equity": 100000,
-  "equity": 100000,
+  "equity": 100000.0,
   "trades": [],
-  "sessions": [],
+  "sessions": [
+    {
+      "date": "2026-10-21",
+      "generated_at_ist": "2026-10-21T17:19:14.966716+05:30",
+      "trades": 0,
+      "gross_pnl": 0,
+      "estimated_costs": 0,
+      "net_pnl": 0,
+      "closing_equity": 100000.0,
+      "daily_return_pct": 0.0,
+      "data_symbols_validated": 0,
+      "data_errors": [
+        "RELIANCE.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)",
+        "HDFCBANK.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)",
+        "ICICIBANK.NS: Incomplete 5-minute candle grid (73/75 expected candles, or one or more timestamps are missing/out of order)",
+        "INFY.NS: Incomplete 5-minute candle grid (73/75 expected candles, or one or more timestamps are missing/out of order)",
+        "TCS.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)",
+        "SBIN.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)",
+        "LT.NS: Incomplete 5-minute candle grid (73/75 expected candles, or one or more timestamps are missing/out of order)",
+        "ITC.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)"
+      ],
+      "status": "DATA_LIMITED"
+    }
+  ],
   "created_at": "2026-10-20T00:00:00+05:30",
   "note": "Baseline only. The 2026-10-20 01:12 IST manual diagnostic was removed because it ran before market close and was not a valid trading session. No historical trades were fabricated."
 }
