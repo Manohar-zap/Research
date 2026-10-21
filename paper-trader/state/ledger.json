@@ -5,7 +5,7 @@
   "sessions": [
     {
       "date": "2026-10-21",
-      "generated_at_ist": "2026-10-21T17:19:14.966716+05:30",
+      "generated_at_ist": "2026-10-21T20:46:09.468188+05:30",
       "trades": 0,
       "gross_pnl": 0,
       "estimated_costs": 0,
@@ -14,14 +14,14 @@
       "daily_return_pct": 0.0,
       "data_symbols_validated": 0,
       "data_errors": [
-        "RELIANCE.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)",
-        "HDFCBANK.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)",
-        "ICICIBANK.NS: Incomplete 5-minute candle grid (73/75 expected candles, or one or more timestamps are missing/out of order)",
-        "INFY.NS: Incomplete 5-minute candle grid (73/75 expected candles, or one or more timestamps are missing/out of order)",
-        "TCS.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)",
-        "SBIN.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)",
-        "LT.NS: Incomplete 5-minute candle grid (73/75 expected candles, or one or more timestamps are missing/out of order)",
-        "ITC.NS: Incomplete 5-minute candle grid (74/75 expected candles, or one or more timestamps are missing/out of order)"
+        "RELIANCE.NS: All free-source attempts failed strict validation: yfinance.download: Incomplete 5-minute candle grid (74/75 candles; 1 missing by count, or timestamps do not match the expected grid) | yfinance.Ticker.history: ModuleNotFoundError: No module named 'scipy'",
+        "HDFCBANK.NS: All free-source attempts failed strict validation: yfinance.download: Incomplete 5-minute candle grid (74/75 candles; 1 missing by count, or timestamps do not match the expected grid) | yfinance.Ticker.history: ModuleNotFoundError: No module named 'scipy'",
+        "ICICIBANK.NS: All free-source attempts failed strict validation: yfinance.download: Incomplete 5-minute candle grid (73/75 candles; 2 missing by count, or timestamps do not match the expected grid) | yfinance.Ticker.history: ModuleNotFoundError: No module named 'scipy'",
+        "INFY.NS: All free-source attempts failed strict validation: yfinance.download: Incomplete 5-minute candle grid (73/75 candles; 2 missing by count, or timestamps do not match the expected grid) | yfinance.Ticker.history: ModuleNotFoundError: No module named 'scipy'",
+        "TCS.NS: All free-source attempts failed strict validation: yfinance.download: Incomplete 5-minute candle grid (74/75 candles; 1 missing by count, or timestamps do not match the expected grid) | yfinance.Ticker.history: ModuleNotFoundError: No module named 'scipy'",
+        "SBIN.NS: All free-source attempts failed strict validation: yfinance.download: Incomplete 5-minute candle grid (74/75 candles; 1 missing by count, or timestamps do not match the expected grid) | yfinance.Ticker.history: ModuleNotFoundError: No module named 'scipy'",
+        "LT.NS: All free-source attempts failed strict validation: yfinance.download: Incomplete 5-minute candle grid (73/75 candles; 2 missing by count, or timestamps do not match the expected grid) | yfinance.Ticker.history: ModuleNotFoundError: No module named 'scipy'",
+        "ITC.NS: All free-source attempts failed strict validation: yfinance.download: Incomplete 5-minute candle grid (74/75 candles; 1 missing by count, or timestamps do not match the expected grid) | yfinance.Ticker.history: ModuleNotFoundError: No module named 'scipy'"
       ],
       "status": "DATA_LIMITED"
     }
