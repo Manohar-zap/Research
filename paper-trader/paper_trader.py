@@ -55,48 +55,96 @@ def save_json(path, obj):
     path.write_text(json.dumps(obj, indent=2, ensure_ascii=False, default=str))
 
 
-def download_today(symbol, today):
+def _prepare_intraday_frame(raw, today):
+    """Normalize a provider frame while preserving strict session validation."""
+    if raw is None or raw.empty:
+        return None, 'No candles returned'
+    df = raw.copy()
+    if isinstance(df.columns, pd.MultiIndex):
+        # yfinance may return either (Price, Ticker) or (Ticker, Price).
+        price_fields = {'Open', 'High', 'Low', 'Close', 'Volume'}
+        for level in range(df.columns.nlevels):
+            if price_fields.issubset(set(df.columns.get_level_values(level))):
+                df.columns = df.columns.get_level_values(level)
+                break
+        else:
+            return None, 'Provider returned an unrecognized multi-index column layout'
+    required = {'Open', 'High', 'Low', 'Close', 'Volume'}
+    if not required.issubset(df.columns):
+        return None, f'Missing required OHLCV columns: {sorted(required - set(df.columns))}'
     try:
-        df = yf.download(symbol, period='5d', interval='5m', auto_adjust=False, progress=False, threads=False)
-        if df is None or df.empty:
-            return None, 'No candles returned'
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.get_level_values(0)
-        idx = pd.to_datetime(df.index)
+        idx = pd.DatetimeIndex(pd.to_datetime(df.index))
         if idx.tz is None:
-            # Yahoo timestamps for NSE symbols should be interpreted as exchange-local
-            # when timezone metadata is absent; do not shift them from UTC.
+            # Treat timezone-naive provider timestamps as exchange-local; do not silently
+            # shift them from UTC. This assumption is recorded for data provenance.
             idx = idx.tz_localize(TZ)
         else:
             idx = idx.tz_convert(TZ)
-        df.index = idx
-        df = df[~df.index.duplicated(keep='last')].sort_index()
-        df = df[df.index.date == today]
-        df = df.between_time('09:15', '15:30')
-        required = {'Open','High','Low','Close','Volume'}
-        if df.empty or not required.issubset(df.columns):
-            return None, 'No verifiable current-session 5-minute candles'
-        df = df[list(required)].apply(pd.to_numeric, errors='coerce').dropna()
-        # Reject malformed OHLCV rows before computing indicators or simulated fills.
-        df = df[
-            (df['Open'] > 0) & (df['High'] > 0) & (df['Low'] > 0) & (df['Close'] > 0)
-            & (df['Volume'] >= 0)
-            & (df['High'] >= df[['Open', 'Close', 'Low']].max(axis=1))
-            & (df['Low'] <= df[['Open', 'Close', 'High']].min(axis=1))
-        ]
-        if df.empty:
-            return None, 'No valid OHLCV rows after price/volume consistency checks'
-        # Require every expected 5-minute timestamp, not just a permissive count.
-        # Invalid OHLCV rows already removed above therefore invalidate the session too.
-        if not is_complete_session(df.index, '5m'):
-            return None, (
-                f'Incomplete 5-minute candle grid ({len(df)}/75 expected candles, '
-                'or one or more timestamps are missing/out of order)'
-            )
-        return df.astype(float), None
-    except Exception as e:
-        return None, f'Data retrieval error: {type(e).__name__}: {e}'
+    except Exception as exc:
+        return None, f'Invalid provider timestamps: {type(exc).__name__}: {exc}'
+    df.index = idx
+    df = df[~df.index.duplicated(keep='last')].sort_index()
+    df = df[df.index.date == today].between_time('09:15', '15:30')
+    if df.empty:
+        return None, 'No verifiable current-session 5-minute candles'
+    df = df[['Open', 'High', 'Low', 'Close', 'Volume']].apply(pd.to_numeric, errors='coerce')
+    # Do not drop malformed rows and then accidentally bless the remaining data:
+    # any malformed candle makes this provider response ineligible.
+    malformed = df.isna().any(axis=1)
+    if malformed.any():
+        return None, f'{int(malformed.sum())} candle(s) have missing/non-numeric OHLCV values'
+    valid = (
+        (df['Open'] > 0) & (df['High'] > 0) & (df['Low'] > 0) & (df['Close'] > 0)
+        & (df['Volume'] >= 0)
+        & (df['High'] >= df[['Open', 'Close', 'Low']].max(axis=1))
+        & (df['Low'] <= df[['Open', 'Close', 'High']].min(axis=1))
+    )
+    if not bool(valid.all()):
+        return None, f'{int((~valid).sum())} candle(s) failed OHLCV consistency checks'
+    if not is_complete_session(df.index, '5m'):
+        expected = 75
+        missing = expected - len(df)
+        return None, (
+            f'Incomplete 5-minute candle grid ({len(df)}/{expected} candles; '
+            f'{max(0, missing)} missing by count, or timestamps do not match the expected grid)'
+        )
+    return df.astype(float), None
 
+
+def download_today(symbol, today):
+    """Fetch real 5-minute candles with bounded free-source retries; never relax validation."""
+    import time
+
+    errors = []
+    # Yahoo's two public yfinance entry points sometimes return different cached payloads.
+    # Try both, then retry once; each candidate must pass the same strict validator.
+    for attempt in range(2):
+        fetchers = [
+            ('yfinance.download', lambda: yf.download(
+                symbol, period='5d', interval='5m', auto_adjust=False,
+                progress=False, threads=False, prepost=False, timeout=20,
+            )),
+            ('yfinance.Ticker.history', lambda: yf.Ticker(symbol).history(
+                period='5d', interval='5m', auto_adjust=False,
+                prepost=False, repair=True, timeout=20,
+            )),
+        ]
+        for source_name, fetch in fetchers:
+            try:
+                raw = fetch()
+                frame, err = _prepare_intraday_frame(raw, today)
+                if err is None:
+                    frame.attrs['data_source'] = f'Yahoo Finance via {source_name}; unofficial; 5-minute OHLCV'
+                    return frame, None
+                errors.append(f'{source_name}: {err}')
+            except Exception as exc:
+                errors.append(f'{source_name}: {type(exc).__name__}: {exc}')
+        if attempt == 0:
+            time.sleep(2)
+    # Surface useful diagnostics in the report instead of hiding the failure behind a
+    # generic message. A partial session remains DATA_LIMITED, never a trade candidate.
+    unique_errors = list(dict.fromkeys(errors))
+    return None, 'All free-source attempts failed strict validation: ' + ' | '.join(unique_errors[-4:])
 
 def indicators(df):
     x = df.copy()
