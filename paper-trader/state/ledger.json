@@ -1,7 +1,27 @@
 {
   "starting_equity": 100000,
-  "equity": 100000.0,
-  "trades": [],
+  "equity": 99896.22,
+  "trades": [
+    {
+      "date": "2026-10-22",
+      "strategy": "VWAP-EMA Momentum v1 (15m fallback)",
+      "ticker": "ICICIBANK.NS",
+      "entry_time_ist": "2026-10-22T14:45:00+05:30",
+      "entry_price": 1399.9,
+      "exit_time_ist": "2026-10-22T14:45:00+05:30",
+      "exit_price": 1395.1929,
+      "quantity": 17,
+      "capital_deployed": 23798.3,
+      "stop_loss": 1395.1929,
+      "target": 1409.3143,
+      "exit_reason": "Stop-loss",
+      "gross_pnl": -80.02,
+      "estimated_costs": 23.76,
+      "net_pnl": -103.78,
+      "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
+      "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
+    }
+  ],
   "sessions": [
     {
       "date": "2026-10-21",
@@ -24,6 +44,31 @@
         "ITC.NS: All free-source attempts failed strict validation: yfinance.download: Incomplete 5-minute candle grid (74/75 candles; 1 missing by count, or timestamps do not match the expected grid) | yfinance.Ticker.history: ModuleNotFoundError: No module named 'scipy'"
       ],
       "status": "DATA_LIMITED"
+    },
+    {
+      "date": "2026-10-22",
+      "generated_at_ist": "2026-10-22T18:50:52.061670+05:30",
+      "trades": 1,
+      "gross_pnl": -80.02,
+      "estimated_costs": 23.76,
+      "net_pnl": -103.78,
+      "closing_equity": 99896.22,
+      "daily_return_pct": -0.1038,
+      "data_symbols_validated": 8,
+      "data_errors": [
+        "5m RELIANCE.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m HDFCBANK.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m ICICIBANK.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m INFY.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m TCS.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m SBIN.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m LT.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m ITC.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m: only 0/8 symbols passed; partial universe rejected.",
+        "5m watchlist did not fully validate; switched to 15m only after all 8 symbols passed the exact 25-candle grid and OHLCV checks.",
+        "Validated all 8 watchlist symbols on the 15m grid."
+      ],
+      "status": "TRADED"
     }
   ],
   "created_at": "2026-10-20T00:00:00+05:30",
