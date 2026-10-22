@@ -3,7 +3,10 @@ name: Paper Trader Tests
 on:
   push:
     paths:
-      - "paper-trader/**"
+      - "paper-trader/paper_trader.py"
+      - "paper-trader/market_data.py"
+      - "paper-trader/requirements.txt"
+      - "paper-trader/tests/**"
       - ".github/workflows/paper-trader-tests.yml"
   pull_request:
     paths:
