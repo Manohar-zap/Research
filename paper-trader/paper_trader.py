@@ -55,13 +55,15 @@ def save_json(path, obj):
     path.write_text(json.dumps(obj, indent=2, ensure_ascii=False, default=str))
 
 
-def _prepare_intraday_frame(raw, today):
-    """Normalize a provider frame while preserving strict session validation."""
+def _prepare_intraday_frame(raw, today, interval='5m'):
+    """Normalize provider OHLCV and require an exact, complete NSE session grid."""
+    if interval not in ('5m', '15m'):
+        return None, f'Unsupported interval: {interval}'
     if raw is None or raw.empty:
         return None, 'No candles returned'
     df = raw.copy()
     if isinstance(df.columns, pd.MultiIndex):
-        # yfinance may return either (Price, Ticker) or (Ticker, Price).
+        # yfinance can return either (Price, Ticker) or (Ticker, Price).
         price_fields = {'Open', 'High', 'Low', 'Close', 'Volume'}
         for level in range(df.columns.nlevels):
             if price_fields.issubset(set(df.columns.get_level_values(level))):
@@ -76,7 +78,7 @@ def _prepare_intraday_frame(raw, today):
         idx = pd.DatetimeIndex(pd.to_datetime(df.index))
         if idx.tz is None:
             # Treat timezone-naive provider timestamps as exchange-local; do not silently
-            # shift them from UTC. This assumption is recorded for data provenance.
+            # shift them from UTC.
             idx = idx.tz_localize(TZ)
         else:
             idx = idx.tz_convert(TZ)
@@ -86,10 +88,10 @@ def _prepare_intraday_frame(raw, today):
     df = df[~df.index.duplicated(keep='last')].sort_index()
     df = df[df.index.date == today].between_time('09:15', '15:30')
     if df.empty:
-        return None, 'No verifiable current-session 5-minute candles'
+        return None, f'No verifiable current-session {interval} candles'
     df = df[['Open', 'High', 'Low', 'Close', 'Volume']].apply(pd.to_numeric, errors='coerce')
     # Do not drop malformed rows and then accidentally bless the remaining data:
-    # any malformed candle makes this provider response ineligible.
+    # any malformed candle makes the provider response ineligible.
     malformed = df.isna().any(axis=1)
     if malformed.any():
         return None, f'{int(malformed.sum())} candle(s) have missing/non-numeric OHLCV values'
@@ -101,50 +103,80 @@ def _prepare_intraday_frame(raw, today):
     )
     if not bool(valid.all()):
         return None, f'{int((~valid).sum())} candle(s) failed OHLCV consistency checks'
-    if not is_complete_session(df.index, '5m'):
-        expected = 75
+    if not is_complete_session(df.index, interval):
+        expected = 75 if interval == '5m' else 25
         missing = expected - len(df)
         return None, (
-            f'Incomplete 5-minute candle grid ({len(df)}/{expected} candles; '
+            f'Incomplete {interval} candle grid ({len(df)}/{expected} candles; '
             f'{max(0, missing)} missing by count, or timestamps do not match the expected grid)'
         )
     return df.astype(float), None
 
 
-def download_today(symbol, today):
-    """Fetch real 5-minute candles with bounded free-source retries; never relax validation."""
+def download_today(symbol, today, interval='5m'):
+    """Fetch Yahoo intraday OHLCV with bounded free-source retries and strict validation."""
     import time
 
     errors = []
-    # Yahoo's two public yfinance entry points sometimes return different cached payloads.
-    # Try both, then retry once; each candidate must pass the same strict validator.
+    # Use both yfinance entry points. Price repair is deliberately disabled: it is
+    # optional, can require SciPy, and must not be used to invent/reconstruct candles.
     for attempt in range(2):
         fetchers = [
             ('yfinance.download', lambda: yf.download(
-                symbol, period='5d', interval='5m', auto_adjust=False,
-                progress=False, threads=False, prepost=False, timeout=20,
+                symbol, period='5d', interval=interval, auto_adjust=False,
+                progress=False, threads=False, prepost=False, timeout=8,
+                repair=False, keepna=True,
             )),
             ('yfinance.Ticker.history', lambda: yf.Ticker(symbol).history(
-                period='5d', interval='5m', auto_adjust=False,
-                prepost=False, repair=True, timeout=20,
+                period='5d', interval=interval, auto_adjust=False,
+                prepost=False, repair=False, keepna=True, timeout=8,
             )),
         ]
         for source_name, fetch in fetchers:
             try:
                 raw = fetch()
-                frame, err = _prepare_intraday_frame(raw, today)
+                frame, err = _prepare_intraday_frame(raw, today, interval)
                 if err is None:
-                    frame.attrs['data_source'] = f'Yahoo Finance via {source_name}; unofficial; 5-minute OHLCV'
+                    frame.attrs['data_source'] = (
+                        f'Yahoo Finance via {source_name}; unofficial; {interval} OHLCV'
+                    )
                     return frame, None
                 errors.append(f'{source_name}: {err}')
             except Exception as exc:
                 errors.append(f'{source_name}: {type(exc).__name__}: {exc}')
         if attempt == 0:
-            time.sleep(2)
-    # Surface useful diagnostics in the report instead of hiding the failure behind a
-    # generic message. A partial session remains DATA_LIMITED, never a trade candidate.
+            time.sleep(1)
     unique_errors = list(dict.fromkeys(errors))
     return None, 'All free-source attempts failed strict validation: ' + ' | '.join(unique_errors[-4:])
+
+
+def download_watchlist(today):
+    """Use 5m data when complete; otherwise try a complete 15m universe. Never mix timeframes."""
+    diagnostics = []
+    for interval in ('5m', '15m'):
+        frames = {}
+        interval_errors = []
+        for symbol in SYMBOLS:
+            frame, err = download_today(symbol, today, interval=interval)
+            if err:
+                interval_errors.append(f'{interval} {symbol}: {err}')
+            else:
+                frames[symbol] = frame
+        if len(frames) == len(SYMBOLS):
+            if interval == '15m':
+                diagnostics.append(
+                    '5m watchlist did not fully validate; switched to 15m only after all '
+                    f'{len(SYMBOLS)} symbols passed the exact 25-candle grid and OHLCV checks.'
+                )
+            diagnostics.append(
+                f'Validated all {len(SYMBOLS)} watchlist symbols on the {interval} grid.'
+            )
+            return frames, interval, diagnostics
+        diagnostics.extend(interval_errors)
+        diagnostics.append(
+            f'{interval}: only {len(frames)}/{len(SYMBOLS)} symbols passed; partial universe rejected.'
+        )
+    return {}, None, diagnostics
 
 def indicators(df):
     x = df.copy()
@@ -162,7 +194,7 @@ def indicators(df):
     return x
 
 
-def simulate_symbol(symbol, df, equity, already_traded, session_pnl):
+def simulate_symbol(symbol, df, equity, already_traded, session_pnl, interval='5m'):
     x = indicators(df)
     trades = []
     if x['ATR14'].isna().all():
@@ -205,7 +237,7 @@ def simulate_symbol(symbol, df, equity, already_traded, session_pnl):
         gross = (exit_price - entry) * qty
         costs = (entry * qty + exit_price * qty) * COST_RATE / 2
         net = gross - costs
-        trade = {'date': str(x.index[entry_i].date()), 'strategy': STRATEGY, 'ticker': symbol, 'entry_time_ist': entry_time.isoformat(), 'entry_price': round(entry, 4), 'exit_time_ist': exit_time.isoformat(), 'exit_price': round(exit_price, 4), 'quantity': qty, 'capital_deployed': round(entry*qty, 2), 'stop_loss': round(stop, 4), 'target': round(target, 4), 'exit_reason': reason, 'gross_pnl': round(gross, 2), 'estimated_costs': round(costs, 2), 'net_pnl': round(net, 2), 'data_source': 'Yahoo Finance via yfinance; unofficial; 5-minute OHLCV', 'execution_note': 'Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption.'}
+        trade = {'date': str(x.index[entry_i].date()), 'strategy': (STRATEGY if interval == '5m' else f'{STRATEGY} (15m fallback)'), 'ticker': symbol, 'entry_time_ist': entry_time.isoformat(), 'entry_price': round(entry, 4), 'exit_time_ist': exit_time.isoformat(), 'exit_price': round(exit_price, 4), 'quantity': qty, 'capital_deployed': round(entry*qty, 2), 'stop_loss': round(stop, 4), 'target': round(target, 4), 'exit_reason': reason, 'gross_pnl': round(gross, 2), 'estimated_costs': round(costs, 2), 'net_pnl': round(net, 2), 'data_source': df.attrs.get('data_source', f'Yahoo Finance via yfinance; unofficial; {interval} OHLCV'), 'execution_note': 'Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption.'}
         trades.append(trade)
         session_pnl += net
         already_traded = True  # one position at a time; this conservative v1 allows one trade across scan
@@ -271,25 +303,21 @@ def main():
         return
     if existing_idx is not None:
         print(f'Retrying prior data-limited run for {today_s}; the existing session will be replaced, not duplicated.')
-    # Evaluate the entire watchlist before selecting a portfolio entry. Otherwise the
-    # first ticker in SYMBOLS can win merely because it appears earlier in the list.
-    all_trades = []; errors = []; data_count = 0
+    # Do not mix sources/timeframes or scan a partial watchlist. Prefer 5m; if any
+    # symbol fails, require all eight symbols to pass the 15m grid before simulation.
+    all_trades = []
     candidate_trades = []
-    for symbol in SYMBOLS:
-        df, err = download_today(symbol, today)
-        if err:
-            errors.append(f'{symbol}: {err}')
-            continue
-        data_count += 1
-        candidate_trades.extend(
-            simulate_symbol(symbol, df, ledger['equity'], False, 0.0)
-        )
-
-    # Do not choose from a partial universe: missing symbols could contain an earlier signal.
+    frames, interval_used, errors = download_watchlist(today)
+    data_count = len(frames)
     if data_count == len(SYMBOLS):
+        for symbol, df in frames.items():
+            candidate_trades.extend(
+                simulate_symbol(symbol, df, ledger['equity'], False, 0.0, interval=interval_used)
+            )
         selected_trade = select_portfolio_trade(candidate_trades)
         if selected_trade is not None:
             all_trades = [selected_trade]
+
     ledger['trades'].extend(all_trades)
     gross = round(sum(t['gross_pnl'] for t in all_trades), 2)
     costs = round(sum(t['estimated_costs'] for t in all_trades), 2)
@@ -315,12 +343,14 @@ def main():
             nifty_note = f"Latest returned daily close: {float(nd['Close'].iloc[-1]):.2f}; candle date: {nd.index[-1]} (verify session/date before comparison)"
     except Exception as e:
         nifty_note = f'Unavailable ({type(e).__name__})'
-    lines = [f'# NSE Paper Trading Report — {today_s}', '', f"**Generated (IST):** {now.isoformat()}", f"**Status:** {session['status']}", '**Mode:** Simulation only; no brokerage orders placed.', '', '## Daily portfolio', f"- Starting virtual equity: ₹{START_CAPITAL:,.2f}", f"- Capital deployed (sum of trade notionals): ₹{sum(t['capital_deployed'] for t in all_trades):,.2f}", f"- Trades: {len(all_trades)}", f"- Gross P/L: ₹{gross:,.2f}", f"- Estimated costs: ₹{costs:,.2f}", f"- **Net P/L: ₹{net:,.2f}**", f"- Closing virtual equity: ₹{ledger['equity']:,.2f}", f"- Daily return: {session['daily_return_pct']:.4f}%", f"- Validated symbols with current-date candles: {data_count}/{len(SYMBOLS)}", '', '## Trades']
+    lines = [f'# NSE Paper Trading Report — {today_s}', '', f"**Generated (IST):** {now.isoformat()}", f"**Status:** {session['status']}", '**Mode:** Simulation only; no brokerage orders placed.', '', '## Daily portfolio', f"- Starting virtual equity: ₹{START_CAPITAL:,.2f}", f"- Capital deployed (sum of trade notionals): ₹{sum(t['capital_deployed'] for t in all_trades):,.2f}", f"- Trades: {len(all_trades)}", f"- Gross P/L: ₹{gross:,.2f}", f"- Estimated costs: ₹{costs:,.2f}", f"- **Net P/L: ₹{net:,.2f}**", f"- Closing virtual equity: ₹{ledger['equity']:,.2f}", f"- Daily return: {session['daily_return_pct']:.4f}%", f"- Validated symbols with current-date candles: {data_count}/{len(SYMBOLS)}", f"- Intraday timeframe used: {interval_used or 'None — DATA_LIMITED'}", '', '## Trades']
     if all_trades:
         for t in all_trades:
             lines += ['', f"### {t['ticker']} — net ₹{t['net_pnl']:,.2f}", f"- Strategy: {t['strategy']}", f"- Entry: {t['entry_time_ist']} at ₹{t['entry_price']:.2f}", f"- Exit: {t['exit_time_ist']} at ₹{t['exit_price']:.2f} ({t['exit_reason']})", f"- Quantity / notional: {t['quantity']} / ₹{t['capital_deployed']:,.2f}", f"- Stop / target: ₹{t['stop_loss']:.2f} / ₹{t['target']:.2f}", f"- Gross P/L / estimated costs / net P/L: ₹{t['gross_pnl']:.2f} / ₹{t['estimated_costs']:.2f} / ₹{t['net_pnl']:.2f}", f"- Data: {t['data_source']}", f"- Fill assumptions: {t['execution_note']}"]
     else:
         lines += ['', 'No trade recorded. This is not a fabricated zero-price trade; no validated strategy entry was executed in the simulation.']
+    lines += ['', '## Data validation diagnostics']
+    lines += [f'- {item}' for item in (errors[:20] if errors else ['No validation errors; full watchlist grid passed.'])]
     lines += ['', '## Cumulative statistics', f"- Recorded sessions: {len(ledger['sessions'])}", f"- Recorded trades: {len(ledger['trades'])}", f"- Cumulative realized net P/L: ₹{sum(t['net_pnl'] for t in ledger['trades']):,.2f}", f"- Win rate: {len(wins)/len(ledger['trades'])*100:.1f}%" if ledger['trades'] else '- Win rate: N/A (no trades)', f"- Average win: ₹{sum(wins)/len(wins):,.2f}" if wins else '- Average win: N/A', f"- Average loss: ₹{sum(losses)/len(losses):,.2f}" if losses else '- Average loss: N/A', f"- Profit factor: {total_wins/total_losses:.2f}" if total_losses else '- Profit factor: N/A (no realized losses)', f'- Maximum observed drawdown: {max_dd:.2f}%', f'- NIFTY 50 reference: {nifty_note}', '', '## Data limitations and assumptions', '- Source: Yahoo Finance via yfinance; unofficial, may be delayed/incomplete and is not an NSE-certified feed.', '- Costs: 0.10% of round-trip notional estimated; not an exact brokerage/tax calculation.', '- OHLC candle fills are approximate. Stop is assumed first if stop and target both occur in one candle.', '- A no-trade or data-limited day is valid. Daily profit targets are not forced.', '- This strategy has not been proven profitable; results are paper simulations, not investment advice.']
     # Weekly/monthly stats by dates in ledger; the current run does not backfill missing history.
     day_date = date.fromisoformat(today_s)
