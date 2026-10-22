@@ -72,7 +72,7 @@ class MarketDataRetryTests(TestCase):
             frame, err = paper_trader.download_today("TEST.NS", date(2026, 10, 21))
         self.assertIsNone(frame)
         self.assertIn("All free-source attempts failed strict validation", err)
-        self.assertIn("Incomplete 5-minute candle grid", err)
+        self.assertIn("Incomplete 5m candle grid", err)
 
 
     def test_watchlist_uses_15m_only_when_all_symbols_are_valid(self):
