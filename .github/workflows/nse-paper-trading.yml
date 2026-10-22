@@ -2,6 +2,13 @@ name: NSE Paper Trading
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/nse-paper-trading.yml"
+      - "paper-trader/paper_trader.py"
+      - "paper-trader/market_data.py"
+      - "paper-trader/requirements.txt"
   schedule:
     # Try at 3:45, 4:00 and 4:15 PM IST, Monday-Friday (cron uses UTC).
     # Later runs retry if free intraday data was delayed on the first run.
@@ -34,11 +41,44 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Run simulation
         run: python paper_trader.py
-      - name: Commit reports and ledger
+      - name: Commit reports and ledger with race-safe push
         working-directory: .
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add paper-trader/reports paper-trader/state
-          git diff --cached --quiet || git commit -m "Update NSE paper trading report"
-          git push
+          if git diff --cached --quiet; then
+            echo "No report or ledger changes to commit."
+            exit 0
+          fi
+          git commit -m "Update NSE paper trading report"
+
+          # The remote may advance while market data is being downloaded. Rebase the
+          # generated report/ledger commit onto the latest main rather than losing it.
+          for attempt in 1 2 3; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo "::error::Could not safely rebase the generated report. Check for a simultaneous edit to the same report or ledger."
+              exit 1
+            fi
+            if git push origin HEAD:main; then
+              echo "Report and ledger committed successfully."
+              exit 0
+            fi
+            echo "Push attempt ${attempt} failed; refreshing main and retrying."
+            sleep $((attempt * 2))
+          done
+          echo "::error::Could not persist report after three safe push attempts."
+          exit 1
+      - name: Preserve report and ledger as run artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nse-paper-trading-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            paper-trader/reports/
+            paper-trader/state/ledger.json
+          if-no-files-found: warn
+          retention-days: 90
