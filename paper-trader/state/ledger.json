@@ -72,19 +72,28 @@
     },
     {
       "date": "2026-10-23",
-      "generated_at_ist": "2026-10-23T18:40:52+05:30",
+      "generated_at_ist": "2026-10-23T20:35:33.563993+05:30",
       "trades": 0,
       "gross_pnl": 0,
       "estimated_costs": 0,
       "net_pnl": 0,
       "closing_equity": 99896.22,
-      "daily_return_pct": 0,
-      "data_symbols_validated": 0,
+      "daily_return_pct": 0.0,
+      "data_symbols_validated": 8,
       "data_errors": [
-        "DATA_LIMITED: This reporting run could not verify a complete current-session intraday OHLCV grid with exact timestamps for all eight NSE cash-equity watchlist symbols.",
-        "NIFTY 50 benchmark close conflict: Investing.com reports 22,455.45 (-1.02%) for 2026-10-23 while Reuters and Financial Express report approximately 22,600 (-0.39%); no benchmark return booked."
+        "5m RELIANCE.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m HDFCBANK.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m ICICIBANK.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m INFY.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m TCS.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m SBIN.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m LT.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m ITC.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m: only 0/8 symbols passed; partial universe rejected.",
+        "5m watchlist did not fully validate; switched to 15m only after all 8 symbols passed the exact 25-candle grid and OHLCV checks.",
+        "Validated all 8 watchlist symbols on the 15m grid."
       ],
-      "status": "DATA_LIMITED"
+      "status": "NO_VALID_SIGNAL"
     }
   ],
   "created_at": "2026-10-20T00:00:00+05:30",
