@@ -78,7 +78,7 @@
       "estimated_costs": 0,
       "net_pnl": 0,
       "closing_equity": 99896.22,
-      "daily_return_pct": 0.0,
+      "daily_return_pct": 0,
       "data_symbols_validated": 8,
       "data_errors": [
         "5m RELIANCE.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
@@ -94,6 +94,30 @@
         "Validated all 8 watchlist symbols on the 15m grid."
       ],
       "status": "NO_VALID_SIGNAL"
+    },
+    {
+      "date": "2026-10-26",
+      "generated_at_ist": "2026-10-26T18:56:50+05:30",
+      "trades": 0,
+      "gross_pnl": 0,
+      "estimated_costs": 0,
+      "net_pnl": 0,
+      "closing_equity": 99896.22,
+      "daily_return_pct": 0,
+      "data_symbols_validated": 0,
+      "data_errors": [
+        "DATA_LIMITED: accessible public pages did not expose a complete exact-timestamp 5m or 15m OHLCV grid for the full 8-symbol watchlist; no intraday strategy simulation was permitted.",
+        "Public daily quote pages showed changing snapshots and/or non-matching close values for some symbols; stock OHLCV was not promoted to verified after-close prices.",
+        "NIFTY 50 benchmark verified from Reuters and Financial Express: 2026-10-26 close 22,753.20, up 153.20 (+0.6779%) from 2026-10-23 close 22,600.00."
+      ],
+      "status": "DATA_LIMITED",
+      "benchmark_close": 22753.2,
+      "benchmark_previous_close": 22600,
+      "benchmark_daily_return_pct": 0.6779,
+      "benchmark_sources": [
+        "https://www.reuters.com/business/energy/indian-shares-track-muted-open-oil-concerns-persist-fed-focus-2026-10-26/",
+        "https://www.financialexpress.com/market/sensex-nifty-today-gift-nifty-signals-negative-start-brent-crude-tops-115bbl-4369399/"
+      ]
     }
   ],
   "created_at": "2026-10-20T00:00:00+05:30",
