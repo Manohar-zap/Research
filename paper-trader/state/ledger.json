@@ -1,6 +1,6 @@
 {
   "starting_equity": 100000,
-  "equity": 99896.22,
+  "equity": 99957.41,
   "trades": [
     {
       "date": "2026-10-22",
@@ -18,6 +18,25 @@
       "gross_pnl": -80.02,
       "estimated_costs": 23.76,
       "net_pnl": -103.78,
+      "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
+      "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
+    },
+    {
+      "date": "2026-10-26",
+      "strategy": "VWAP-EMA Momentum v1 (15m fallback)",
+      "ticker": "ICICIBANK.NS",
+      "entry_time_ist": "2026-10-26T14:30:00+05:30",
+      "entry_price": 1398.0,
+      "exit_time_ist": "2026-10-26T15:15:00+05:30",
+      "exit_price": 1403.0,
+      "quantity": 17,
+      "capital_deployed": 23766.0,
+      "stop_loss": 1394.1857,
+      "target": 1405.6286,
+      "exit_reason": "End-of-day exit",
+      "gross_pnl": 85.0,
+      "estimated_costs": 23.81,
+      "net_pnl": 61.19,
       "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
       "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
     }
@@ -97,27 +116,28 @@
     },
     {
       "date": "2026-10-26",
-      "generated_at_ist": "2026-10-26T18:56:50+05:30",
-      "trades": 0,
-      "gross_pnl": 0,
-      "estimated_costs": 0,
-      "net_pnl": 0,
-      "closing_equity": 99896.22,
-      "daily_return_pct": 0,
-      "data_symbols_validated": 0,
+      "generated_at_ist": "2026-10-26T22:18:18.155928+05:30",
+      "trades": 1,
+      "gross_pnl": 85.0,
+      "estimated_costs": 23.81,
+      "net_pnl": 61.19,
+      "closing_equity": 99957.41,
+      "daily_return_pct": 0.0613,
+      "data_symbols_validated": 8,
       "data_errors": [
-        "DATA_LIMITED: accessible public pages did not expose a complete exact-timestamp 5m or 15m OHLCV grid for the full 8-symbol watchlist; no intraday strategy simulation was permitted.",
-        "Public daily quote pages showed changing snapshots and/or non-matching close values for some symbols; stock OHLCV was not promoted to verified after-close prices.",
-        "NIFTY 50 benchmark verified from Reuters and Financial Express: 2026-10-26 close 22,753.20, up 153.20 (+0.6779%) from 2026-10-23 close 22,600.00."
+        "5m RELIANCE.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m HDFCBANK.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m ICICIBANK.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m INFY.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m TCS.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m SBIN.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m LT.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m ITC.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m: only 0/8 symbols passed; partial universe rejected.",
+        "5m watchlist did not fully validate; switched to 15m only after all 8 symbols passed the exact 25-candle grid and OHLCV checks.",
+        "Validated all 8 watchlist symbols on the 15m grid."
       ],
-      "status": "DATA_LIMITED",
-      "benchmark_close": 22753.2,
-      "benchmark_previous_close": 22600,
-      "benchmark_daily_return_pct": 0.6779,
-      "benchmark_sources": [
-        "https://www.reuters.com/business/energy/indian-shares-track-muted-open-oil-concerns-persist-fed-focus-2026-10-26/",
-        "https://www.financialexpress.com/market/sensex-nifty-today-gift-nifty-signals-negative-start-brent-crude-tops-115bbl-4369399/"
-      ]
+      "status": "TRADED"
     }
   ],
   "created_at": "2026-10-20T00:00:00+05:30",
