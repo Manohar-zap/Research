@@ -1,6 +1,6 @@
 {
   "starting_equity": 100000,
-  "equity": 99831.42,
+  "equity": 99941.68,
   "trades": [
     {
       "date": "2026-10-22",
@@ -56,6 +56,25 @@
       "gross_pnl": -101.62,
       "estimated_costs": 24.36,
       "net_pnl": -125.99,
+      "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
+      "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
+    },
+    {
+      "date": "2026-10-28",
+      "strategy": "VWAP-EMA Momentum v1 (15m fallback)",
+      "ticker": "ITC.NS",
+      "entry_time_ist": "2026-10-28T14:30:00+05:30",
+      "entry_price": 257.85,
+      "exit_time_ist": "2026-10-28T15:15:00+05:30",
+      "exit_price": 259.2571,
+      "quantity": 96,
+      "capital_deployed": 24753.6,
+      "stop_loss": 257.1464,
+      "target": 259.2571,
+      "exit_reason": "Target",
+      "gross_pnl": 135.09,
+      "estimated_costs": 24.82,
+      "net_pnl": 110.26,
       "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
       "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
     }
@@ -185,30 +204,28 @@
     },
     {
       "date": "2026-10-28",
-      "generated_at_ist": "2026-10-28T18:42:08+05:30",
-      "trades": 0,
-      "gross_pnl": 0,
-      "estimated_costs": 0,
-      "net_pnl": 0,
-      "closing_equity": 99831.42,
-      "daily_return_pct": 0,
-      "data_symbols_validated": 0,
+      "generated_at_ist": "2026-10-28T22:08:52.993718+05:30",
+      "trades": 1,
+      "gross_pnl": 135.09,
+      "estimated_costs": 24.82,
+      "net_pnl": 110.26,
+      "closing_equity": 99941.68,
+      "daily_return_pct": 0.1104,
+      "data_symbols_validated": 8,
       "data_errors": [
-        "No complete, verifiable timestamped intraday OHLCV dataset was available in this run for the full 8-symbol NSE cash-equity watchlist.",
-        "No stock-level intraday entries/exits or prices were inferred from daily quote pages.",
-        "NIFTY 50 close verified from two accessible published sources: 22,698.85 on 2026-10-28; previous close 22,749.75."
+        "5m RELIANCE.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m HDFCBANK.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m ICICIBANK.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m INFY.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m TCS.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m SBIN.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m LT.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m ITC.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m: only 0/8 symbols passed; partial universe rejected.",
+        "5m watchlist did not fully validate; switched to 15m only after all 8 symbols passed the exact 25-candle grid and OHLCV checks.",
+        "Validated all 8 watchlist symbols on the 15m grid."
       ],
-      "status": "DATA_LIMITED",
-      "benchmark": {
-        "symbol": "NIFTY 50",
-        "date": "2026-10-28",
-        "close": 22698.85,
-        "previous_close": 22749.75,
-        "change_points": -50.9,
-        "daily_return_pct": -0.22374,
-        "source_1": "https://www.investing.com/indices/s-p-cnx-nifty-historical-data",
-        "source_2": "https://upstox.com/news/market-news/stocks/market-wrap-today-sensex-ends-350-pts-lower-nifty-50-closes-at-22-698-it-stocks-reliance-among-top-losers/article-202564/"
-      }
+      "status": "TRADED"
     }
   ],
   "created_at": "2026-10-20T00:00:00+05:30",
