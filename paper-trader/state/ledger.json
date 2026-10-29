@@ -226,6 +226,35 @@
         "Validated all 8 watchlist symbols on the 15m grid."
       ],
       "status": "TRADED"
+    },
+    {
+      "date": "2026-10-29",
+      "generated_at_ist": "2026-10-29T18:40:30+05:30",
+      "trades": 0,
+      "gross_pnl": 0,
+      "estimated_costs": 0,
+      "net_pnl": 0,
+      "closing_equity": 99941.68,
+      "daily_return_pct": 0,
+      "data_symbols_validated": 0,
+      "data_errors": [
+        "This run could not independently verify complete, timestamped intraday OHLCV for all 8 watchlist symbols; strict all-symbol validation was not satisfied. No trade was simulated.",
+        "NIFTY 50 closing-price sources conflict for 2026-10-29: Reuters and Financial Express report 22936.75; the English Investing.com historical page reports 22813.40. Benchmark comparison is provisional and flagged."
+      ],
+      "status": "DATA_LIMITED",
+      "benchmark": {
+        "index": "NIFTY 50",
+        "date": "2026-10-29",
+        "reported_close_candidate": 22936.75,
+        "previous_close_reference": 22698.85,
+        "reported_daily_return_pct_candidate": 1.0486,
+        "status": "SOURCE_CONFLICT; exclude from definitive relative-performance statistics",
+        "sources": [
+          "Reuters: https://www.reuters.com/world/india/indian-shares-set-positive-start-after-fed-holds-rates-steady-elevated-oil-2026-10-29/",
+          "Financial Express: https://www.financialexpress.com/market/share-market-today-live-stock-market-sensex-nifty-gold-silver-rate-29th-october-2026-4371881/",
+          "Investing.com English historical data page reports a conflicting 22813.40 close: https://www.investing.com/indices/s-p-cnx-nifty-historical-data"
+        ]
+      }
     }
   ],
   "created_at": "2026-10-20T00:00:00+05:30",
