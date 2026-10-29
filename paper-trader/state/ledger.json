@@ -1,6 +1,6 @@
 {
   "starting_equity": 100000,
-  "equity": 99941.68,
+  "equity": 99855.68,
   "trades": [
     {
       "date": "2026-10-22",
@@ -75,6 +75,25 @@
       "gross_pnl": 135.09,
       "estimated_costs": 24.82,
       "net_pnl": 110.26,
+      "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
+      "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
+    },
+    {
+      "date": "2026-10-29",
+      "strategy": "VWAP-EMA Momentum v1 (15m fallback)",
+      "ticker": "HDFCBANK.NS",
+      "entry_time_ist": "2026-10-29T14:30:00+05:30",
+      "entry_price": 686.2,
+      "exit_time_ist": "2026-10-29T15:00:00+05:30",
+      "exit_price": 684.4965,
+      "quantity": 36,
+      "capital_deployed": 24703.2,
+      "stop_loss": 684.4965,
+      "target": 689.6071,
+      "exit_reason": "Stop-loss",
+      "gross_pnl": -61.33,
+      "estimated_costs": 24.67,
+      "net_pnl": -86.0,
       "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
       "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
     }
@@ -229,32 +248,28 @@
     },
     {
       "date": "2026-10-29",
-      "generated_at_ist": "2026-10-29T18:40:30+05:30",
-      "trades": 0,
-      "gross_pnl": 0,
-      "estimated_costs": 0,
-      "net_pnl": 0,
-      "closing_equity": 99941.68,
-      "daily_return_pct": 0,
-      "data_symbols_validated": 0,
+      "generated_at_ist": "2026-10-29T22:26:42.893562+05:30",
+      "trades": 1,
+      "gross_pnl": -61.33,
+      "estimated_costs": 24.67,
+      "net_pnl": -86.0,
+      "closing_equity": 99855.68,
+      "daily_return_pct": -0.0861,
+      "data_symbols_validated": 8,
       "data_errors": [
-        "This run could not independently verify complete, timestamped intraday OHLCV for all 8 watchlist symbols; strict all-symbol validation was not satisfied. No trade was simulated.",
-        "NIFTY 50 closing-price sources conflict for 2026-10-29: Reuters and Financial Express report 22936.75; the English Investing.com historical page reports 22813.40. Benchmark comparison is provisional and flagged."
+        "5m RELIANCE.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m HDFCBANK.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m ICICIBANK.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m INFY.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m TCS.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m SBIN.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m LT.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m ITC.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m: only 0/8 symbols passed; partial universe rejected.",
+        "5m watchlist did not fully validate; switched to 15m only after all 8 symbols passed the exact 25-candle grid and OHLCV checks.",
+        "Validated all 8 watchlist symbols on the 15m grid."
       ],
-      "status": "DATA_LIMITED",
-      "benchmark": {
-        "index": "NIFTY 50",
-        "date": "2026-10-29",
-        "reported_close_candidate": 22936.75,
-        "previous_close_reference": 22698.85,
-        "reported_daily_return_pct_candidate": 1.0486,
-        "status": "SOURCE_CONFLICT; exclude from definitive relative-performance statistics",
-        "sources": [
-          "Reuters: https://www.reuters.com/world/india/indian-shares-set-positive-start-after-fed-holds-rates-steady-elevated-oil-2026-10-29/",
-          "Financial Express: https://www.financialexpress.com/market/share-market-today-live-stock-market-sensex-nifty-gold-silver-rate-29th-october-2026-4371881/",
-          "Investing.com English historical data page reports a conflicting 22813.40 close: https://www.investing.com/indices/s-p-cnx-nifty-historical-data"
-        ]
-      }
+      "status": "TRADED"
     }
   ],
   "created_at": "2026-10-20T00:00:00+05:30",
