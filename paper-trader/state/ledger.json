@@ -93,7 +93,7 @@
       "exit_reason": "Stop-loss",
       "gross_pnl": -61.33,
       "estimated_costs": 24.67,
-      "net_pnl": -86.0,
+      "net_pnl": -86,
       "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
       "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
     }
@@ -252,7 +252,7 @@
       "trades": 1,
       "gross_pnl": -61.33,
       "estimated_costs": 24.67,
-      "net_pnl": -86.0,
+      "net_pnl": -86,
       "closing_equity": 99855.68,
       "daily_return_pct": -0.0861,
       "data_symbols_validated": 8,
@@ -270,6 +270,39 @@
         "Validated all 8 watchlist symbols on the 15m grid."
       ],
       "status": "TRADED"
+    },
+    {
+      "date": "2026-10-30",
+      "generated_at_ist": "2026-10-30T18:45:15+05:30",
+      "trades": 0,
+      "gross_pnl": 0,
+      "estimated_costs": 0,
+      "net_pnl": 0,
+      "closing_equity": 99855.68,
+      "daily_return_pct": 0,
+      "data_symbols_validated": 0,
+      "data_errors": [
+        "No NSE Paper Trading GitHub Actions run for 2026-10-30 was present in the repository's latest workflow-run listing at report time; latest listed paper-trading run was 2026-10-29.",
+        "No independently verifiable complete timestamped intraday OHLCV session grid was available for the full eight-symbol watchlist in this run. No intraday signals or simulated trades were evaluated."
+      ],
+      "status": "DATA_LIMITED",
+      "benchmark": {
+        "index": "NIFTY 50",
+        "date": "2026-10-30",
+        "close": 23053.1,
+        "previous_close": 22936.75,
+        "open": 22964.5,
+        "high": 23116.1,
+        "low": 22905.7,
+        "daily_return_pct": 0.5073,
+        "reported_volume": "328.56M",
+        "source": "Investing.com historical data; daily change corroborated by Reuters",
+        "source_urls": [
+          "https://ng.investing.com/indices/s-p-cnx-nifty-historical-data",
+          "https://www.reuters.com/world/india/indian-shares-seen-opening-higher-after-earnings-led-rebound-higher-oil-cap-2026-10-30/"
+        ],
+        "note": "Index daily OHLCV is a benchmark only; it is not a substitute for stock-level intraday data."
+      }
     }
   ],
   "created_at": "2026-10-20T00:00:00+05:30",
