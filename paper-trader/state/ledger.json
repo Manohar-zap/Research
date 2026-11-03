@@ -1,6 +1,6 @@
 {
   "starting_equity": 100000,
-  "equity": 99749.66,
+  "equity": 99662.04,
   "trades": [
     {
       "date": "2026-10-22",
@@ -113,6 +113,25 @@
       "gross_pnl": -81.13,
       "estimated_costs": 24.89,
       "net_pnl": -106.02,
+      "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
+      "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
+    },
+    {
+      "date": "2026-11-03",
+      "strategy": "VWAP-EMA Momentum v1 (15m fallback)",
+      "ticker": "HDFCBANK.NS",
+      "entry_time_ist": "2026-11-03T14:45:00+05:30",
+      "entry_price": 724.55,
+      "exit_time_ist": "2026-11-03T15:00:00+05:30",
+      "exit_price": 722.6964,
+      "quantity": 34,
+      "capital_deployed": 24634.7,
+      "stop_loss": 722.6964,
+      "target": 728.2571,
+      "exit_reason": "Stop-loss",
+      "gross_pnl": -63.02,
+      "estimated_costs": 24.6,
+      "net_pnl": -87.62,
       "data_source": "Yahoo Finance via yfinance.download; unofficial; 15m OHLCV",
       "execution_note": "Simulated from candle OHLC; intrabar ordering is unknowable; stop-first assumption."
     }
@@ -342,6 +361,31 @@
           "Investing.com Indonesia historical data: https://id.investing.com/indices/s-p-cnx-nifty-historical-data"
         ]
       }
+    },
+    {
+      "date": "2026-11-03",
+      "generated_at_ist": "2026-11-03T23:21:37.029945+05:30",
+      "trades": 1,
+      "gross_pnl": -63.02,
+      "estimated_costs": 24.6,
+      "net_pnl": -87.62,
+      "closing_equity": 99662.04,
+      "daily_return_pct": -0.0878,
+      "data_symbols_validated": 8,
+      "data_errors": [
+        "5m RELIANCE.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m HDFCBANK.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m ICICIBANK.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m INFY.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m TCS.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m SBIN.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m LT.NS: All free-source attempts failed strict validation: yfinance.download: 2 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 2 candle(s) have missing/non-numeric OHLCV values",
+        "5m ITC.NS: All free-source attempts failed strict validation: yfinance.download: 1 candle(s) have missing/non-numeric OHLCV values | yfinance.Ticker.history: 1 candle(s) have missing/non-numeric OHLCV values",
+        "5m: only 0/8 symbols passed; partial universe rejected.",
+        "5m watchlist did not fully validate; switched to 15m only after all 8 symbols passed the exact 25-candle grid and OHLCV checks.",
+        "Validated all 8 watchlist symbols on the 15m grid."
+      ],
+      "status": "TRADED"
     }
   ],
   "created_at": "2026-10-20T00:00:00+05:30",
