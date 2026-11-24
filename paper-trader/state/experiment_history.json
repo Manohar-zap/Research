@@ -17317,7 +17317,7 @@
     },
     {
       "experiment_version": "grid-v2",
-      "run_at_ist": "2026-11-24T04:23:08.110328+05:30",
+      "run_at_ist": "2026-11-25T02:57:39.905819+05:30",
       "latest_data_date": "2026-11-23",
       "interval": "15m",
       "common_session_dates": 46,
@@ -18045,13 +18045,14 @@
             "costs": 0
           }
         }
-      ]
+      ],
+      "repeat_check_count": 1
     }
   ],
-  "updated_at_ist": "2026-11-24T04:23:08.110328+05:30",
+  "updated_at_ist": "2026-11-25T02:57:39.905819+05:30",
   "latest": {
     "experiment_version": "grid-v2",
-    "run_at_ist": "2026-11-24T04:23:08.110328+05:30",
+    "run_at_ist": "2026-11-25T02:57:39.905819+05:30",
     "latest_data_date": "2026-11-23",
     "interval": "15m",
     "common_session_dates": 46,
